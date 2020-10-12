@@ -16,7 +16,6 @@ import com.fasterxml.jackson.databind.ObjectWriter;
 import org.slf4j.Logger;
 import scala.Option;
 
-import java.io.Serializable;
 import java.util.*;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
@@ -148,8 +147,7 @@ class HttpServer {
     this.clusterAwareStatistics = clusterAwareStatistics;
   }
 
-  public static class ClusterAwareStatistics implements Statistics, Serializable {
-    private static final long serialVersionUID = 1L;
+  public static class ClusterAwareStatistics implements Statistics, CborSerializable {
     public final int totalPings;
     public final int pingRatePs;
     public final Map<Integer, Integer> nodePings;
@@ -165,8 +163,7 @@ class HttpServer {
     this.singletonAwareStatistics = singletonAwareStatistics;
   }
 
-  public static class SingletonAwareStatistics implements Statistics, Serializable {
-    private static final long serialVersionUID = 1L;
+  public static class SingletonAwareStatistics implements Statistics, CborSerializable {
     public final int totalPings;
     public final int pingRatePs;
     public final Map<Integer, Integer> nodePings;
@@ -178,8 +175,7 @@ class HttpServer {
     }
   }
 
-  public static class Nodes implements Serializable {
-    private static final long serialVersionUID = 1L;
+  public static class Nodes implements CborSerializable {
     public final int selfPort;
     public final boolean leader;
     public final boolean oldest;
@@ -261,8 +257,7 @@ class HttpServer {
     }
   }
 
-  public static class Node implements Serializable {
-    private static final long serialVersionUID = 1L;
+  public static class Node implements CborSerializable {
     public final int port;
     public final String state;
     public final String memberState;

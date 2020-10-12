@@ -13,7 +13,6 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import org.slf4j.Logger;
 import scala.Option;
 
-import java.io.Serializable;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.*;
@@ -157,8 +156,7 @@ public class ClusterAwareActor extends AbstractBehavior<ClusterAwareActor.Messag
     }
   }
 
-  public static class Ping implements Message, Serializable {
-    private static final long serialVersionUID = 1L;
+  public static class Ping implements Message, CborSerializable {
     public final ActorRef<Message> replyTo;
     public final long start;
 
@@ -174,8 +172,7 @@ public class ClusterAwareActor extends AbstractBehavior<ClusterAwareActor.Messag
     }
   }
 
-  public static class Pong implements Message, Serializable {
-    private static final long serialVersionUID = 1L;
+  public static class Pong implements Message, CborSerializable {
     public final ActorRef<Message> replyFrom;
     public final long pingStart;
 

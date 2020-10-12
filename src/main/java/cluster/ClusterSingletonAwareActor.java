@@ -10,7 +10,6 @@ import akka.cluster.typed.SingletonActor;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import org.slf4j.Logger;
 
-import java.io.Serializable;
 import java.time.Duration;
 import java.util.Map;
 import java.util.Optional;
@@ -65,11 +64,10 @@ class ClusterSingletonAwareActor extends AbstractBehavior<ClusterSingletonAwareA
     return Cluster.get(getContext().getSystem()).selfMember().status().equals(MemberStatus.up());
   }
 
-  interface Message extends Serializable {
+  interface Message extends CborSerializable {
   }
 
   public static class Ping implements Message {
-    private static final long serialVersionUID = 1L;
     public final ActorRef<Message> replyTo;
     public final int port;
     public final long start;
@@ -88,7 +86,6 @@ class ClusterSingletonAwareActor extends AbstractBehavior<ClusterSingletonAwareA
   }
 
   public static class Pong implements Message {
-    private static final long serialVersionUID = 1L;
     public final ActorRef<Message> replyFrom;
     public final long pingStart;
     public final int totalPings;
