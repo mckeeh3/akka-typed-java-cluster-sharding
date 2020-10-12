@@ -1,0 +1,30 @@
+#!/bin/bash
+
+# Opens an Akka cluster dashboard web page on the specified node, nodes 1-9, default 1.
+
+usage() {
+    echo "Usage: $0 [N] - Opens an Akka cluster dashboard web page on the specified node N, nodes 1-9, default 1." ; exit 1
+}
+
+openDashboardWebPage() {
+  node=$1
+
+  if hash open 2>/dev/null; then
+    open http://127.0.0.1:955$node/
+  elif hash xdg-open 2>/dev/null; then
+    xdg-open http://127.0.0.1:955$node/
+  elif hash cmd 2>/dev/null; then
+    cmd /c start http://127.0.0.1:955$node/
+  else
+    echo "OS \"$OSTYPE\" is not currently supported."
+  fi
+}
+
+[[ $# = 0 ]] && node=1 || node=$1
+
+if [[ $node =~ ^[1-9]$ ]] ; then
+  openDashboardWebPage $node
+else
+  echo "Cluster node number $node is invalid. The node number must be 1 through 9."
+  usage
+fi

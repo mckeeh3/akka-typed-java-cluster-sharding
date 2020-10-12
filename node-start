@@ -1,0 +1,55 @@
+#!/bin/bash
+
+# Use this script to start one or more Akka cluster nodes. The command line parameters must be from 1 to 9. The
+# node's JVMs is started as a background process. The process logs both stdin and stderr to a file located in
+# the /tmp directory. The log file name is derived from the current directory name with a suffix of "-N.log",
+# N is the node number. The Akka port number is set to 255N, N is the node number.
+
+usage() {
+  echo "Usage: $0 nodes - Start cluster nodes, node numbers must 1 through 9." ; exit 1
+}
+
+checkLocalHost2() {
+  if hash pfctl 2>/dev/null; then
+    ifconfig | grep "127.0.0.2" > /dev/null
+    localhost2=$?
+  elif hash ip 2>/dev/null; then
+    ip address | grep "127.0.0.2" > /dev/null
+    localhost2=$?
+  else
+    localhost2=1
+  fi
+  if [ $localhost2 -eq 0 ] ; then
+    export localhost2=true
+  else
+    export localhost2=false
+  fi
+}
+
+startNode() {
+  node=$1
+  port="255"$node
+  export akka_management_http_port="855"$node
+  echo "Start node $1 on port $port, management port $akka_management_http_port, HTTP port 955$node"
+  java -jar "$jarFilename" "$port" &> /tmp/"$scriptFilename"-"$node".log &
+}
+
+[ $# -eq 0 ] && usage
+
+scriptPath=$(dirname $0)
+scriptPathFull=$(cd $(dirname $0) ; pwd -P)
+scriptFilename=$(basename "$scriptPathFull")
+jarFilename=$(find "$scriptPath"/target -name '*allinone.jar*')
+
+while [[ $# -gt 0 ]]; do
+  node=$1
+  shift
+
+  if [[ $node =~ ^[1-9]$ ]] ; then
+    checkLocalHost2
+    startNode "$node"
+  else
+    echo "Cluster node number $node is invalid. The node number must be 1 through 9."
+    usage
+  fi
+done

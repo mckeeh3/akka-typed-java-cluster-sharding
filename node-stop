@@ -1,0 +1,77 @@
+#!/bin/bash
+
+# Use this script to stop one or more Akka cluster nodes. The command line parameters must be from 1 to 9.
+# pkill and kill SIGTERM always did hard kill -9 (SIGKILL) process terminations so switched to Akka Management via curl.
+
+usage() {
+  echo "Usage: $0 nodes - Stop cluster nodes, node numbers must be 1 through 9." ; exit 1
+}
+
+stopNode() {
+  node=$1
+  if [[ $OSTYPE == "cygwin"* ]]; then
+    stopNodeCygwin "$node"
+  else
+    stopNodeLinux "$node"
+  fi
+}
+
+stopNodeLinux() {
+  node=$1
+  port="255"$node
+  echo "Stop node $node on port $port"
+
+  if hash pkill 2>/dev/null; then
+    pkill -f "$(basename "$jarFilename") $port"
+  else
+    echo "Error: pkill command required. For cygwin please intatll the procps-ng package."
+  fi
+}
+
+stopNodeCygwin() {
+  node=$1
+  mgmtPort="855"$node
+  nodePort="255"$node
+
+  httpStatus=$(curl --write-out %{http_code} --max-time 5 --silent --output /dev/null http://localhost:"$mgmtPort"/cluster/members)
+
+  if [[ $httpStatus == 200 ]] ; then
+    echo "Stop node $node on port $nodePort via Akka management port $mgmtPort"
+    curl --silent -X DELETE http://localhost:"$mgmtPort"/cluster/members/cluster@"$localhostName":"$nodePort" --output /dev/null
+  fi
+}
+
+getLocalhostName() {
+  if hash pfctl 2>/dev/null; then
+    ifconfig | grep "127.0.0.2" > /dev/null
+    localhost2=$?
+  elif hash ip 2>/dev/null; then
+    ip address | grep "127.0.0.2" > /dev/null
+    localhost2=$?
+  else
+    localhost2=1
+  fi
+  if [ $localhost2 -eq 0 ] ; then
+    export localhostName="127.0.0.2"
+  else
+    export localhostName="127.0.0.1"
+  fi
+}
+
+[ $# -eq 0 ] && usage
+
+scriptPath=$(dirname "$0")
+jarFilename=$(find "$scriptPath"/target -name '*allinone.jar*')
+
+while [[ $# -gt 0 ]]; do
+  node=$1
+  shift
+
+  if [[ $node =~ ^[1-9]$ ]] ; then
+    getLocalhostName
+    stopNode "$node"
+  else
+    echo "Cluster node number $node is invalid. The node number must be 1 through 9."
+    usage
+  fi
+done

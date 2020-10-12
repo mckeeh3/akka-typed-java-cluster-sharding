@@ -1,0 +1,175 @@
+#!/bin/bash
+
+helpCluster() {
+  echo "Cluster commands are used to start, stop, view status, and open the Akka cluster dashboard."
+  echo
+  echo "./akka cluster start N | stop | status | dashboard [N]"
+  echo "./akka cluster start [N]      # Starts one or more cluster nodes as specified by [N] or default 9, which must be 1-9."
+  echo "./akka cluster stop           # Stops all currently cluster nodes."
+  echo "./akka cluster status         # Shows an Akka Management view of the cluster status/state."
+  echo "./akka cluster dashboard [N]  # Opens an Akka cluster dashboard web page hosted on the specified [N] or default 1, which must be 1-9."
+}
+
+helpNode() {
+  echo "Node commands are used to start, stop, kill, down, or tail the log of cluster nodes."
+  echo "Nodes are started on port 255N and management port 855N, N is the node number 1-9."
+  echo
+  echo "./akka node start N | stop N | kill N | down N | tail N"
+  echo "./akka node start N...  # Start one or more cluster nodes for nodes 1-9."
+  echo "./akka node stop N...   # Stop one or more cluster nodes for nodes 1-9."
+  echo "./akka node kill N...   # Kill (kill -9) one or more cluster nodes for nodes 1-9."
+  echo "./akka node down N...   # Down one or more cluster nodes for nodes 1-9."
+  echo "./akka node tail N      # Tail the log file of the specified cluster node for nodes 1-9."
+}
+
+helpNet() {
+  echo "Net commands are used to block and unblock network access to cluster nodes."
+  echo
+  echo "./akka net block N | unblock | view | enable | disable | partition"
+  echo "./akka net block N...  # Block network access to node ports, ports 255N, nodes N 1-9."
+  echo "./akka net unblock     # Reset the network blocking rules."
+  echo "./akka net view        # View the current network blocking rules."
+  echo "./akka net enable      # Enable packet filtering, which enables blocking network access to cluster nodes. (OSX only)"
+  echo "./akka net disable     # Disable packet filtering, which disables blocking network access to cluster nodes. (OSX only)"
+  echo "./akka net localhost2  # Create or remove IP alias 127.0.0.2"
+  echo "./akka net partition   # Partition 127.0.0.2 on or off"
+}
+
+helpAll() {
+  echo "This CLI is used to start, stop and view the dashboard nodes in an Akka cluster."
+  echo
+  echo "These commands manage the Akka cluster as defined in this project. A cluster"
+  echo "of nodes is started using the JAR file built by this project's Maven POM file."
+  echo
+  helpCluster
+  echo
+  helpNode
+  echo
+  helpNet
+}
+
+clusterCommand() {
+  command=$1
+  argument=$2
+
+  case $command in
+    "start")
+      "$scriptPath"/cluster-start $argument
+      ;;
+    "stop")
+      "$scriptPath"/cluster-stop
+      ;;
+    "status")
+      "$scriptPath"/cluster-status
+      ;;
+    "dashboard")
+      "$scriptPath"/cluster-dashboard $argument
+      ;;
+    *)
+      echo "Invalid subcommand '$command'"
+      echo
+      helpCluster
+      ;;
+  esac
+}
+
+nodeCommand() {
+  command=$1
+  shift
+  arguments=$@
+
+  case $command in
+    "start")
+      "$scriptPath"/node-start $arguments
+      ;;
+    "stop")
+      "$scriptPath"/node-stop $arguments
+      ;;
+    "kill")
+      "$scriptPath"/node-kill $arguments
+      ;;
+    "down")
+      "$scriptPath"/node-down $arguments
+      ;;
+    "tail")
+      "$scriptPath"/node-tail $arguments
+      ;;
+    *)
+      echo "Invalid subcommand '$command'"
+      echo
+      helpNode
+      ;;
+  esac
+}
+
+netCommand() {
+  command=$1
+  shift
+  arguments=$@
+
+  case $command in
+    "enable")
+      "$scriptPath"/net-enable
+      ;;
+    "disable")
+      "$scriptPath"/net-disable
+      ;;
+    "block")
+      "$scriptPath"/net-block $arguments
+      ;;
+    "unblock")
+      "$scriptPath"/net-unblock $arguments
+      ;;
+    "localhost2")
+      "$scriptPath"/net-localhost2 $arguments
+      ;;
+    "partition")
+      "$scriptPath"/net-partition $arguments
+      ;;
+    "view")
+      "$scriptPath"/net-view $arguments
+      ;;
+    *)
+      echo "Invalid subcommand '$command'"
+      echo
+      helpNet
+      ;;
+  esac
+}
+
+parseCommand() {
+  command=$1
+  subCommand=$2
+  shift
+  shift
+  arguments=$@
+
+  case $command in
+    "cluster")
+      clusterCommand "$subCommand" $arguments
+      ;;
+    "node")
+      nodeCommand "$subCommand" $arguments
+      ;;
+    "net")
+      netCommand "$subCommand" $arguments
+      ;;
+    *)
+      echo "Invalid command '$command'"
+      echo
+      helpAll
+      ;;
+  esac
+}
+
+scriptPath=$(dirname "$0")
+
+if [ $# -eq 0 ] ; then
+  helpAll
+else
+  command=$1
+  subCommand=$2
+  shift
+  shift
+  parseCommand "$command" "$subCommand" $@
+fi

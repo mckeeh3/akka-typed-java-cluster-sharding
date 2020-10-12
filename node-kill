@@ -1,0 +1,35 @@
+#!/bin/bash
+
+# Use this script to kill (kill -9) one or more Akka cluster nodes. The command line parameters must be from 1 to 9.
+
+usage() {
+  echo "Usage: $0 nodes - Kill cluster nodes, node numbers must be 1 through 9." ; exit 1
+}
+
+killNode() {
+  node=$1
+  port="255"$node
+  echo "Kill node $1 on port $port"
+  if hash pkill 2>/dev/null; then
+    pkill -9 -f "$(basename "$jarFilename") $port"
+  else
+    echo "Error: pkill command required. For cygwin please intatll the procps-ng package."
+  fi
+}
+
+[ $# -eq 0 ] && usage
+
+scriptPath=$(dirname "$0")
+jarFilename=$(find "$scriptPath"/target -name "*allinone.jar*")
+
+while [[ $# -gt 0 ]]; do
+  node=$1
+  shift
+
+  if [[ $node =~ ^[1-9]$ ]] ; then
+    killNode "$node"
+  else
+    echo "Cluster node number $node is invalid. The node number must be 1 through 9."
+    usage
+  fi
+done
