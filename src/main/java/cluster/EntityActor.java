@@ -60,6 +60,7 @@ public class EntityActor extends AbstractBehavior<EntityActor.Command> {
   }
 
   private Behavior<Command> onGetValue(GetValue getValue) {
+    log().info("{} -> {}", getValue, state == null ? "(not initialized)" : state);
     if (state == null) {
       getValue.replyTo.tell(new GetValueAckNotFound(getValue.id));
       state = new State(getValue.id, new Value(""));
