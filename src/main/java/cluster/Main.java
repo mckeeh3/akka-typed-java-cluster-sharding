@@ -6,7 +6,10 @@ import akka.actor.typed.Behavior;
 import akka.actor.typed.Terminated;
 import akka.actor.typed.javadsl.ActorContext;
 import akka.actor.typed.javadsl.Behaviors;
+import akka.cluster.sharding.typed.javadsl.ClusterSharding;
+import akka.cluster.sharding.typed.javadsl.Entity;
 import akka.management.javadsl.AkkaManagement;
+
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
 
@@ -28,6 +31,10 @@ class Main {
 
     context.spawn(ClusterAwareActor.create(httpServerActorRef), ClusterAwareActor.class.getSimpleName());
     context.spawn(ClusterSingletonAwareActor.create(httpServerActorRef), ClusterSingletonAwareActor.class.getSimpleName());
+    context.spawn(EntityCommandActor.create(), EntityCommandActor.class.getSimpleName());
+    context.spawn(EntityQueryActor.create(), EntityQueryActor.class.getSimpleName());
+
+    startClusterSharding(context.getSystem(), httpServerActorRef);
   }
 
   public static void main(String[] args) {
@@ -54,5 +61,17 @@ class Main {
             + String.format("akka.management.http.route-providers-read-only = %s%n", "false")
             + String.format("akka.remote.artery.advanced.tcp.outbound-client-hostname = %s%n", hostname))
         .withFallback(config);
+  }
+
+  private static void startClusterSharding(final ActorSystem<?> actorSystem, ActorRef<HttpServer.Statistics> httpServerActorRef) {
+    ClusterSharding clusterSharding = ClusterSharding.get(actorSystem);
+    clusterSharding.init(
+      Entity.of(
+        EntityActor.entityTypeKey,
+        entityContext ->
+          EntityActor.create(entityContext.getEntityId(), httpServerActorRef)
+      )
+      .withStopMessage(EntityActor.Passivate.INSTANCE)
+    );
   }
 }

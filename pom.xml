@@ -34,6 +34,11 @@
         </dependency>
         <dependency>
             <groupId>com.typesafe.akka</groupId>
+            <artifactId>akka-cluster-sharding-typed_${scala.version}</artifactId>
+            <version>${akka.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.typesafe.akka</groupId>
             <artifactId>akka-serialization-jackson_${scala.version}</artifactId>
             <version>${akka.version}</version>
         </dependency>

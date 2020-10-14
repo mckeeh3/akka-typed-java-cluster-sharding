@@ -10,6 +10,8 @@ import akka.http.javadsl.model.ContentTypes;
 import akka.http.javadsl.model.MediaTypes;
 import akka.http.javadsl.model.headers.RawHeader;
 import akka.http.javadsl.server.Route;
+
+import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectWriter;
@@ -140,14 +142,14 @@ class HttpServer {
         }).collect(Collectors.toList());
   }
 
-  public interface Statistics {
+  public interface Statistics extends CborSerializable {
   }
 
   void load(ClusterAwareStatistics clusterAwareStatistics) {
     this.clusterAwareStatistics = clusterAwareStatistics;
   }
 
-  public static class ClusterAwareStatistics implements Statistics, CborSerializable {
+  public static class ClusterAwareStatistics implements Statistics {
     public final int totalPings;
     public final int pingRatePs;
     public final Map<Integer, Integer> nodePings;
@@ -163,7 +165,7 @@ class HttpServer {
     this.singletonAwareStatistics = singletonAwareStatistics;
   }
 
-  public static class SingletonAwareStatistics implements Statistics, CborSerializable {
+  public static class SingletonAwareStatistics implements Statistics {
     public final int totalPings;
     public final int pingRatePs;
     public final Map<Integer, Integer> nodePings;
@@ -172,6 +174,32 @@ class HttpServer {
       this.totalPings = totalPings;
       this.pingRatePs = pingRatePs;
       this.nodePings = nodePings;
+    }
+  }
+
+  public static class Action implements Statistics {
+    final String member;
+    final String shardId;
+    final String entityId;
+    final String action;
+    final boolean forward;
+
+    @JsonCreator
+    Action(String member, String shardId, String entityId, String action, boolean forward) {
+      this.member = member;
+      this.shardId = shardId;
+      this.entityId = entityId;
+      this.action = action;
+      this.forward = forward;
+    }
+
+    Action asNoForward() {
+      return new Action(member, shardId, entityId, action, false);
+    }
+
+    @Override
+    public String toString() {
+      return String.format("%s[%s, %s, %s, %s, %b]", getClass().getSimpleName(), member, shardId, entityId, action, forward);
     }
   }
 
