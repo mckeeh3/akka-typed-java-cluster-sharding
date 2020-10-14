@@ -26,8 +26,7 @@ public class ClusterAwareActor extends AbstractBehavior<ClusterAwareActor.Messag
   private final ActorRef<HttpServer.Statistics> httpServerActor;
   private Set<ActorRef<Message>> serviceInstances;
   private static final Duration tickInterval = Duration.ofMillis(25 + Math.round(50 * Math.random())); // avg 50ms per tick
-
-  static final ServiceKey<Message> serviceKey = ServiceKey.create(Message.class, ClusterAwareActor.class.getSimpleName());
+  private static final ServiceKey<Message> serviceKey = ServiceKey.create(Message.class, ClusterAwareActor.class.getSimpleName());
 
   static Behavior<Message> create(ActorRef<HttpServer.Statistics> httpServerActor) {
     return Behaviors.setup(context ->

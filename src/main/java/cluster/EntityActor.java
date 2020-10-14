@@ -11,6 +11,8 @@ import akka.actor.typed.javadsl.ActorContext;
 import akka.actor.typed.javadsl.Receive;
 import akka.actor.typed.javadsl.Behaviors;
 import akka.cluster.sharding.typed.javadsl.EntityTypeKey;
+import cluster.HttpServer.EntityAction;
+import cluster.HttpServerActor.BroadcastEntityAction;
 
 public class EntityActor extends AbstractBehavior<EntityActor.Command> {
   private final ActorContext<Command> actorContext;
@@ -78,11 +80,15 @@ public class EntityActor extends AbstractBehavior<EntityActor.Command> {
   }
 
   private void notifyStart() {
-    httpServerActorRef.tell(new HttpServer.Action(memberId, shardId, entityId, "start", true));
+    final EntityAction entityAction = new HttpServer.EntityAction(memberId, shardId, entityId, "start");
+    final BroadcastEntityAction broadcastEntityAction = new BroadcastEntityAction(entityAction);
+    httpServerActorRef.tell(broadcastEntityAction);
   }
 
   private void notifyStop() {
-    httpServerActorRef.tell(new HttpServer.Action(memberId, shardId, entityId, "stop", true));
+    final EntityAction entityAction = new EntityAction(memberId, shardId, entityId, "stop");
+    final BroadcastEntityAction broadcastEntityAction = new BroadcastEntityAction(entityAction);
+    httpServerActorRef.tell(broadcastEntityAction);
   }
 
   private Logger log() {
