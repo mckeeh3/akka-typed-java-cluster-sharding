@@ -6,6 +6,7 @@ import akka.cluster.ClusterEvent;
 import akka.cluster.Member;
 import akka.cluster.MemberStatus;
 import akka.cluster.typed.Cluster;
+import akka.cluster.typed.Leave;
 import akka.http.javadsl.Http;
 import akka.http.javadsl.model.ContentTypes;
 import akka.http.javadsl.model.MediaTypes;
@@ -101,14 +102,20 @@ class HttpServer {
 
   private Message handleClientMessage(Message message) {
     String messageText = message.asTextMessage().getStrictText();
-    if (messageText.startsWith("akka.tcp")) {
-      broadcastStopNode(messageText);
+    if (messageText.startsWith("akka://")) {
+      handleStopNode(messageText);
     }
     return getTreeAsJson();
   }
 
-  private void broadcastStopNode(String memberAddress) {
-    // cluster.state().getMembers().forEach(member -> forwardAction(new StopNode(memberAddress), member));
+  private void handleStopNode(String memberAddress) {
+    log().info("Stop node {}", memberAddress);
+    final Cluster cluster = Cluster.get(actorSystem);
+    cluster.state().getMembers().forEach(member -> {
+      if (memberAddress.equals(member.address().toString())) {
+        cluster.manager().tell(Leave.create(member.address()));
+      }
+    });
   }
 
   private Message getTreeAsJson() {
