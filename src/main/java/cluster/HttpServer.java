@@ -42,7 +42,8 @@ class HttpServer {
     if (port >= 2551 && port <= 2559) {
       return new HttpServer(port + 7000, actorSystem);
     } else {
-      final String message = String.format("HTTP server not started. Node port %d is invalid. The port must be >= 2551 and <= 2559.", port);
+      final String message = String
+          .format("HTTP server not started. Node port %d is invalid. The port must be >= 2551 and <= 2559.", port);
       System.err.printf("%s%n", message);
       throw new RuntimeException(message);
     }
@@ -73,33 +74,29 @@ class HttpServer {
         path("viewer.js", () -> getFromResource("viewer.js", ContentTypes.APPLICATION_JSON)),
         path("d3.v5.js", () -> getFromResource("d3.v5.js", MediaTypes.APPLICATION_JAVASCRIPT.toContentTypeWithMissingCharset())),
         path("viewer-entities", () -> handleWebSocketMessages(handleClientMessages())),
-        path("favicon.ico", () -> getFromResource("favicon.ico", MediaTypes.IMAGE_X_ICON.toContentType()))
-    );
+        path("favicon.ico", () -> getFromResource("favicon.ico", MediaTypes.IMAGE_X_ICON.toContentType())));
   }
 
   private Route clusterState() {
-    return get(
-        () -> respondWithHeader(RawHeader.create("Access-Control-Allow-Origin", "*"),
-            () -> complete(loadNodes(actorSystem, clusterAwareStatistics, singletonAwareStatistics).toJson()))
-    );
+    return get(() -> respondWithHeader(RawHeader.create("Access-Control-Allow-Origin", "*"),
+        () -> complete(loadNodes(actorSystem, clusterAwareStatistics, singletonAwareStatistics).toJson())));
   }
 
   private Flow<Message, Message, NotUsed> handleClientMessages() {
-    return Flow.<Message>create()
-      .collect(new JavaPartialFunction<Message, Message>() {
-        @Override
-        public Message apply(Message message, boolean isCheck) {
-          if (isCheck && message.isText()) {
-            return null;
-          } else if (isCheck && !message.isText()) {
-            throw noMatch();
-          } else if (message.asTextMessage().isStrict()) {
-            return handleClientMessage(message);
-          } else {
-            return TextMessage.create("");
-          }
+    return Flow.<Message>create().collect(new JavaPartialFunction<Message, Message>() {
+      @Override
+      public Message apply(Message message, boolean isCheck) {
+        if (isCheck && message.isText()) {
+          return null;
+        } else if (isCheck && !message.isText()) {
+          throw noMatch();
+        } else if (message.asTextMessage().isStrict()) {
+          return handleClientMessage(message);
+        } else {
+          return TextMessage.create("");
         }
-      });
+      }
+    });
   }
 
   private Message handleClientMessage(Message message) {
@@ -111,7 +108,7 @@ class HttpServer {
   }
 
   private void broadcastStopNode(String memberAddress) {
-    //cluster.state().getMembers().forEach(member -> forwardAction(new StopNode(memberAddress), member));
+    // cluster.state().getMembers().forEach(member -> forwardAction(new StopNode(memberAddress), member));
   }
 
   private Message getTreeAsJson() {
@@ -136,32 +133,30 @@ class HttpServer {
 
     final Nodes nodes = new Nodes(
         memberPort(cluster.selfMember()),
-        cluster.selfMember().address().equals(clusterState.getLeader()),
+        cluster.selfMember().address().equals(clusterState.getLeader()), 
         oldest.equals(cluster.selfMember()),
         clusterAwareStatistics, singletonAwareStatistics);
 
-    StreamSupport.stream(clusterState.getMembers().spliterator(), false)
-        .forEach(new Consumer<Member>() {
-          @Override
-          public void accept(Member member) {
-            nodes.add(member, leader(member), oldest(member), seedNode(member));
-          }
+    StreamSupport.stream(clusterState.getMembers().spliterator(), false).forEach(new Consumer<Member>() {
+      @Override
+      public void accept(Member member) {
+        nodes.add(member, leader(member), oldest(member), seedNode(member));
+      }
 
-          private boolean leader(Member member) {
-            return member.address().equals(clusterState.getLeader());
-          }
+      private boolean leader(Member member) {
+        return member.address().equals(clusterState.getLeader());
+      }
 
-          private boolean oldest(Member member) {
-            return oldest.equals(member);
-          }
+      private boolean oldest(Member member) {
+        return oldest.equals(member);
+      }
 
-          private boolean seedNode(Member member) {
-            return seedNodePorts.contains(memberPort(member));
-          }
-        });
+      private boolean seedNode(Member member) {
+        return seedNodePorts.contains(memberPort(member));
+      }
+    });
 
-    clusterState.getUnreachable()
-        .forEach(nodes::addUnreachable);
+    clusterState.getUnreachable().forEach(nodes::addUnreachable);
 
     return nodes;
   }
@@ -176,22 +171,17 @@ class HttpServer {
 
   private static int memberPort(Member member) {
     final Option<Object> portOption = member.address().port();
-    return portOption.isDefined()
-        ? Integer.parseInt(portOption.get().toString())
-        : 0;
+    return portOption.isDefined() ? Integer.parseInt(portOption.get().toString()) : 0;
   }
 
   private static List<Integer> seedNodePorts(ActorSystem<?> actorSystem) {
-    return actorSystem.settings().config().getList("akka.cluster.seed-nodes")
-        .stream().map(s -> s.unwrapped().toString())
-        .map(s -> {
+    return actorSystem.settings().config().getList("akka.cluster.seed-nodes").stream().map(s -> s.unwrapped().toString()).map(s -> {
           final String[] split = s.split(":");
           return split.length == 0 ? 0 : Integer.parseInt(split[split.length - 1]);
         }).collect(Collectors.toList());
   }
 
-  public interface Statistics extends CborSerializable {
-  }
+  public interface Statistics extends CborSerializable {}
 
   void load(ClusterAwareStatistics clusterAwareStatistics) {
     this.clusterAwareStatistics = clusterAwareStatistics;
@@ -211,17 +201,25 @@ class HttpServer {
 
   void load(SingletonAwareStatistics singletonAwareStatistics) {
     this.singletonAwareStatistics = singletonAwareStatistics;
+    tree.setMemberType(singletonAwareStatistics.memberId, "singleton");
   }
 
   public static class SingletonAwareStatistics implements Statistics {
+    public final String memberId;
     public final int totalPings;
     public final int pingRatePs;
     public final Map<Integer, Integer> nodePings;
 
-    public SingletonAwareStatistics(int totalPings, int pingRatePs, Map<Integer, Integer> nodePings) {
+    public SingletonAwareStatistics(String memberId, int totalPings, int pingRatePs, Map<Integer, Integer> nodePings) {
+      this.memberId = memberId;
       this.totalPings = totalPings;
       this.pingRatePs = pingRatePs;
       this.nodePings = nodePings;
+    }
+
+    @Override
+    public String toString() {
+      return String.format("%s[%s, %d, %d, %s]", getClass().getSimpleName(), memberId, totalPings, pingRatePs, nodePings);
     }
   }
 

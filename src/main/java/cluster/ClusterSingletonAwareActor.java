@@ -1,5 +1,6 @@
 package cluster;
 
+import akka.actor.Address;
 import akka.actor.typed.ActorRef;
 import akka.actor.typed.Behavior;
 import akka.actor.typed.javadsl.*;
@@ -12,13 +13,12 @@ import org.slf4j.Logger;
 
 import java.time.Duration;
 import java.util.Map;
-import java.util.Optional;
-
 
 class ClusterSingletonAwareActor extends AbstractBehavior<ClusterSingletonAwareActor.Message> {
   private final ActorRef<Message> clusterSingletonProxy;
   private final ActorRef<HttpServer.Statistics> httpServerActor;
-  private static final Duration tickInterval = Duration.ofMillis(25 + Math.round(50 * Math.random())); // avg 50ms per tick
+  private final Duration tickInterval = Duration.ofMillis(25 + Math.round(50 * Math.random())); // avg 50ms per tick
+  private final String memberId;
   private final int port;
 
   static Behavior<Message> create(ActorRef<HttpServer.Statistics> httpServerActor) {
@@ -29,8 +29,9 @@ class ClusterSingletonAwareActor extends AbstractBehavior<ClusterSingletonAwareA
   ClusterSingletonAwareActor(ActorContext<Message> actorContext, TimerScheduler<Message> timers, ActorRef<HttpServer.Statistics> httpServerActor) {
     super(actorContext);
     this.httpServerActor = httpServerActor;
-    final Optional<Integer> port = Cluster.get(actorContext.getSystem()).selfAddress().getPort();
-    this.port = port.orElse(-1);
+    final Address selfAddress = Cluster.get(actorContext.getSystem()).selfAddress();
+    memberId = selfAddress.toString();
+    port = selfAddress.getPort().orElse(-1);
 
     clusterSingletonProxy = ClusterSingleton.get(actorContext.getSystem())
         .init(SingletonActor.of(ClusterSingletonActor.create(), ClusterSingletonActor.class.getSimpleName()));
@@ -56,7 +57,7 @@ class ClusterSingletonAwareActor extends AbstractBehavior<ClusterSingletonAwareA
     if (pong.totalPings % 100 == 0) {
       log().info("<--{}", pong);
     }
-    httpServerActor.tell(new HttpServer.SingletonAwareStatistics(pong.totalPings, pong.pingRatePs, pong.singletonStatistics));
+    httpServerActor.tell(new HttpServer.SingletonAwareStatistics(memberId, pong.totalPings, pong.pingRatePs, pong.singletonStatistics));
     return Behaviors.same();
   }
 

@@ -41,15 +41,13 @@ class HttpServerActor {
         .build();
   }
 
-  private Behavior<HttpServer.Statistics> onClusterAwareStatistics(
-      HttpServer.ClusterAwareStatistics clusterAwareStatistics) {
+  private Behavior<HttpServer.Statistics> onClusterAwareStatistics(HttpServer.ClusterAwareStatistics clusterAwareStatistics) {
     log().info("Cluster aware statistics {} {}", clusterAwareStatistics.totalPings, clusterAwareStatistics.nodePings);
     httpServer.load(clusterAwareStatistics);
     return Behaviors.same();
   }
 
-  private Behavior<HttpServer.Statistics> onSingletonAwareStatistics(
-      HttpServer.SingletonAwareStatistics singletonAwareStatistics) {
+  private Behavior<HttpServer.Statistics> onSingletonAwareStatistics(HttpServer.SingletonAwareStatistics singletonAwareStatistics) {
     log().info("Singleton aware statistics {}", singletonAwareStatistics.nodePings);
     httpServer.load(singletonAwareStatistics);
     return Behaviors.same();
