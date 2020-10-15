@@ -10,11 +10,11 @@ openViewerWebPage() {
   node=$1
 
   if hash open 2>/dev/null; then
-    open http://127.0.0.1:955$node/
+    open http://127.0.0.1:955$node/viewer
   elif hash xdg-open 2>/dev/null; then
-    xdg-open http://127.0.0.1:955$node/
+    xdg-open http://127.0.0.1:955$node/viewer
   elif hash cmd 2>/dev/null; then
-    cmd /c start http://127.0.0.1:955$node/
+    cmd /c start http://127.0.0.1:955$node/viewer
   else
     echo "OS \"$OSTYPE\" is not currently supported."
   fi

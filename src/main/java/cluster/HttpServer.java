@@ -61,12 +61,14 @@ class HttpServer {
   private Route route() {
     return concat(
         path("", () -> getFromResource("dashboard.html", ContentTypes.TEXT_HTML_UTF8)),
+        path("dashboard", () -> getFromResource("dashboard.html", ContentTypes.TEXT_HTML_UTF8)),
         path("dashboard.html", () -> getFromResource("dashboard.html", ContentTypes.TEXT_HTML_UTF8)),
         path("dashboard.js", () -> getFromResource("dashboard.js", ContentTypes.APPLICATION_JSON)),
         path("dashboard-cluster-aware.js", () -> getFromResource("dashboard-cluster-aware.js", ContentTypes.APPLICATION_JSON)),
         path("dashboard-singleton-aware.js", () -> getFromResource("dashboard-singleton-aware.js", ContentTypes.APPLICATION_JSON)),
         path("p5.js", () -> getFromResource("p5.js", ContentTypes.APPLICATION_JSON)),
         path("cluster-state", this::clusterState),
+        path("viewer", () -> getFromResource("viewer.html", ContentTypes.TEXT_HTML_UTF8)),
         path("viewer.html", () -> getFromResource("viewer.html", ContentTypes.TEXT_HTML_UTF8)),
         path("viewer.js", () -> getFromResource("viewer.js", ContentTypes.APPLICATION_JSON)),
         path("d3.v5.js", () -> getFromResource("d3.v5.js", MediaTypes.APPLICATION_JAVASCRIPT.toContentTypeWithMissingCharset())),
