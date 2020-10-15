@@ -17,6 +17,7 @@ import akka.actor.typed.javadsl.Receive;
 import cluster.ClusterSingletonAwareActor.Message;
 
 class ClusterSingletonActor extends AbstractBehavior<Message> {
+  private final String memberId;
   private final SingletonStatistics singletonStatistics = new SingletonStatistics();
 
   static Behavior<Message> create() {
@@ -25,6 +26,7 @@ class ClusterSingletonActor extends AbstractBehavior<Message> {
 
   ClusterSingletonActor(ActorContext<Message> actorContext) {
     super(actorContext);
+    memberId = actorContext.getSystem().address().toString();
   }
 
   @Override
@@ -38,7 +40,7 @@ class ClusterSingletonActor extends AbstractBehavior<Message> {
       log().info("<=={}", ping);
     }
     ping.replyTo
-        .tell(new ClusterSingletonAwareActor.Pong(getContext().getSelf(), ping.start, singletonStatistics.totalPings,
+        .tell(new ClusterSingletonAwareActor.Pong(memberId, ping.start, singletonStatistics.totalPings,
             singletonStatistics.pingRatePs, Collections.unmodifiableMap(singletonStatistics.nodePings)));
     return Behaviors.same();
   }

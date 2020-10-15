@@ -18,7 +18,6 @@ class ClusterSingletonAwareActor extends AbstractBehavior<ClusterSingletonAwareA
   private final ActorRef<Message> clusterSingletonProxy;
   private final ActorRef<HttpServer.Statistics> httpServerActor;
   private final Duration tickInterval = Duration.ofMillis(25 + Math.round(50 * Math.random())); // avg 50ms per tick
-  private final String memberId;
   private final int port;
 
   static Behavior<Message> create(ActorRef<HttpServer.Statistics> httpServerActor) {
@@ -30,7 +29,6 @@ class ClusterSingletonAwareActor extends AbstractBehavior<ClusterSingletonAwareA
     super(actorContext);
     this.httpServerActor = httpServerActor;
     final Address selfAddress = Cluster.get(actorContext.getSystem()).selfAddress();
-    memberId = selfAddress.toString();
     port = selfAddress.getPort().orElse(-1);
 
     clusterSingletonProxy = ClusterSingleton.get(actorContext.getSystem())
@@ -57,7 +55,7 @@ class ClusterSingletonAwareActor extends AbstractBehavior<ClusterSingletonAwareA
     if (pong.totalPings % 100 == 0) {
       log().info("<--{}", pong);
     }
-    httpServerActor.tell(new HttpServer.SingletonAwareStatistics(memberId, pong.totalPings, pong.pingRatePs, pong.singletonStatistics));
+    httpServerActor.tell(new HttpServer.SingletonAwareStatistics(pong.replyFrom, pong.totalPings, pong.pingRatePs, pong.singletonStatistics));
     return Behaviors.same();
   }
 
@@ -87,14 +85,14 @@ class ClusterSingletonAwareActor extends AbstractBehavior<ClusterSingletonAwareA
   }
 
   public static class Pong implements Message {
-    public final ActorRef<Message> replyFrom;
+    public final String replyFrom;
     public final long pingStart;
     public final int totalPings;
     public final int pingRatePs;
     public final Map<Integer, Integer> singletonStatistics;
 
     @JsonCreator
-    public Pong(ActorRef<Message> replyFrom, long pingStart, int totalPings, int pingRatePs, Map<Integer, Integer> singletonStatistics) {
+    public Pong(String replyFrom, long pingStart, int totalPings, int pingRatePs, Map<Integer, Integer> singletonStatistics) {
       this.replyFrom = replyFrom;
       this.pingStart = pingStart;
       this.totalPings = totalPings;
@@ -104,7 +102,7 @@ class ClusterSingletonAwareActor extends AbstractBehavior<ClusterSingletonAwareA
 
     @Override
     public String toString() {
-      return String.format("%s[%s, %,dns, %s]", getClass().getSimpleName(), replyFrom.path(), System.nanoTime() - pingStart, singletonStatistics);
+      return String.format("%s[%s, %,dns, %s]", getClass().getSimpleName(), replyFrom, System.nanoTime() - pingStart, singletonStatistics);
     }
   }
 
