@@ -46,7 +46,7 @@ class EntityCommandActor extends AbstractBehavior<EntityActor.Command> {
   }
 
   private Behavior<EntityActor.Command> onTick() {
-    final String entityId = String.format("node-%d-%d", nodePort, Math.round(Math.random() * entitiesPerNode));
+    final String entityId = EntityActor.entityId(nodePort, (int) Math.round(Math.random() * entitiesPerNode));
     final EntityActor.Id id = new EntityActor.Id(entityId);
     final EntityActor.Value value = new EntityActor.Value(new Date());
     final EntityRef<Command> entityRef = clusterSharding.entityRefFor(EntityActor.entityTypeKey, entityId);

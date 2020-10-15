@@ -94,6 +94,10 @@ public class EntityActor extends AbstractBehavior<EntityActor.Command> {
   private Logger log() {
     return actorContext.getSystem().log();
   }
+
+  static String entityId(int nodePort, int id) {
+    return String.format("%d-%d", nodePort, id);
+  }
   
   public interface Command extends CborSerializable {}
 
