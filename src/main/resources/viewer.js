@@ -180,10 +180,10 @@ function circleColor(d) {
         return '#046E97';
     } else if (d.data.type.includes('shard')) {
         return '#00C000';
-    } else if (d.data.type.includes('singleton')) {
-        return '#BA6000';
     } else if (d.data.type.includes('httpServer')) {
         return '#F3B500';
+    } else if (d.data.type.includes('singleton')) {
+        return '#8F42EB'; // '#BA6000';
     } else if (d.data.type.includes('member')) {
         return '#F17D00';
     } else if (d.data.type.includes('cluster')) {
