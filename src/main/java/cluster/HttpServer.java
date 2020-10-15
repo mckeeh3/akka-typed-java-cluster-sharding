@@ -1,5 +1,6 @@
 package cluster;
 
+import akka.NotUsed;
 import akka.actor.typed.ActorSystem;
 import akka.cluster.ClusterEvent;
 import akka.cluster.Member;
@@ -9,7 +10,11 @@ import akka.http.javadsl.Http;
 import akka.http.javadsl.model.ContentTypes;
 import akka.http.javadsl.model.MediaTypes;
 import akka.http.javadsl.model.headers.RawHeader;
+import akka.http.javadsl.model.ws.Message;
+import akka.http.javadsl.model.ws.TextMessage;
 import akka.http.javadsl.server.Route;
+import akka.japi.JavaPartialFunction;
+import akka.stream.javadsl.Flow;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -61,8 +66,12 @@ class HttpServer {
         path("dashboard-cluster-aware.js", () -> getFromResource("dashboard-cluster-aware.js", ContentTypes.APPLICATION_JSON)),
         path("dashboard-singleton-aware.js", () -> getFromResource("dashboard-singleton-aware.js", ContentTypes.APPLICATION_JSON)),
         path("p5.js", () -> getFromResource("p5.js", ContentTypes.APPLICATION_JSON)),
-        path("favicon.ico", () -> getFromResource("favicon.ico", MediaTypes.IMAGE_X_ICON.toContentType())),
-        path("cluster-state", this::clusterState)
+        path("cluster-state", this::clusterState),
+        path("viewer.html", () -> getFromResource("viewer.html", ContentTypes.TEXT_HTML_UTF8)),
+        path("viewer.js", () -> getFromResource("viewer.js", ContentTypes.APPLICATION_JSON)),
+        path("d3.v5.js", () -> getFromResource("d3.v5.js", MediaTypes.APPLICATION_JAVASCRIPT.toContentTypeWithMissingCharset())),
+        path("viewer-entities", () -> handleWebSocketMessages(handleClientMessages())),
+        path("favicon.ico", () -> getFromResource("favicon.ico", MediaTypes.IMAGE_X_ICON.toContentType()))
     );
   }
 
@@ -71,6 +80,41 @@ class HttpServer {
         () -> respondWithHeader(RawHeader.create("Access-Control-Allow-Origin", "*"),
             () -> complete(loadNodes(actorSystem, clusterAwareStatistics, singletonAwareStatistics).toJson()))
     );
+  }
+
+  private Flow<Message, Message, NotUsed> handleClientMessages() {
+    return Flow.<Message>create()
+      .collect(new JavaPartialFunction<Message, Message>() {
+        @Override
+        public Message apply(Message message, boolean isCheck) {
+          if (isCheck && message.isText()) {
+            return null;
+          } else if (isCheck && !message.isText()) {
+            throw noMatch();
+          } else if (message.asTextMessage().isStrict()) {
+            return handleClientMessage(message);
+          } else {
+            return TextMessage.create("");
+          }
+        }
+      });
+  }
+
+  private Message handleClientMessage(Message message) {
+    String messageText = message.asTextMessage().getStrictText();
+    if (messageText.startsWith("akka.tcp")) {
+      broadcastStopNode(messageText);
+    }
+    return getTreeAsJson();
+  }
+
+  private void broadcastStopNode(String memberAddress) {
+    //cluster.state().getMembers().forEach(member -> forwardAction(new StopNode(memberAddress), member));
+  }
+
+  private Message getTreeAsJson() {
+    tree.setMemberType(Cluster.get(actorSystem).selfMember().address().toString(), "httpServer");
+    return TextMessage.create(tree.toJson());
   }
 
   private static Nodes loadNodes(ActorSystem<?> actorSystem, ClusterAwareStatistics clusterAwareStatistics, SingletonAwareStatistics singletonAwareStatistics) {

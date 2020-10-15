@@ -8,6 +8,7 @@ helpCluster() {
   echo "./akka cluster stop           # Stops all currently cluster nodes."
   echo "./akka cluster status         # Shows an Akka Management view of the cluster status/state."
   echo "./akka cluster dashboard [N]  # Opens an Akka cluster dashboard web page hosted on the specified [N] or default 1, which must be 1-9."
+  echo "./akka cluster viewer [N]     # Opens an Akka cluster sharding viewer web page hosted on the specified [N] or default 1, which must be 1-9."
 }
 
 helpNode() {
@@ -64,6 +65,9 @@ clusterCommand() {
       ;;
     "dashboard")
       "$scriptPath"/cluster-dashboard $argument
+      ;;
+    "viewer")
+      "$scriptPath"/cluster-viewer $argument
       ;;
     *)
       echo "Invalid subcommand '$command'"

@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Akka Cluster Sharding Viewer</title>
+    <style> body {padding: 0; margin: 0;} </style>
+    <style>
+
+    /* Make the chart container fill the page using CSS. */
+    #chart {
+      position: fixed;
+      left: 0px;
+      right: 0px;
+      top: 0px;
+      bottom: 0px;
+    }
+
+    g {
+      width: inherit;
+      height: inherit;
+    }
+
+    path.link {
+      fill: none;
+      stroke: #2194e3;
+      stroke-width: 3px;
+    }
+
+    text {
+      font-family: sans-serif;
+      font-size: 12px;
+      fill: #999;
+    }
+
+    </style>
+  </head>
+  <body>
+    <div id='chart'><svg></svg></div>
+    <script src="d3.v5.js"></script>
+    <script src="viewer.js"></script>
+  </body>
+</html>
