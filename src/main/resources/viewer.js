@@ -135,7 +135,7 @@ function update(hierarchy) {
     .attr('transform', d => `rotate(${d.x * 180 / Math.PI - 90}) translate(${d.y},0)`)
     .select('circle.entity')
       .attr('r', circleRadius)
-      .style('fill', '#42aaff')
+      .style('fill', entityColor) //'#42aaff')
       .style('opacity', 1.0);
 
   node.transition(t2)
@@ -175,39 +175,36 @@ function nodeId(d) {
   return d.data.type + '-' + d.data.name;
 }
 
-function circleColor(d) {
-  if (d.data.type.includes("entity")) {
-    //return '#046E97';
-    return entityColor(d.data);
-  } else if (d.data.type.includes("shard")) {
-    return "#00C000";
-  } else if (d.data.type.includes("httpServer")) {
-    return "#F3B500";
-  } else if (d.data.type.includes("singleton")) {
-    return "#8F42EB";
-  } else if (d.data.type.includes("member")) {
-    return "#F17D00";
-  } else if (d.data.type.includes("cluster")) {
-    return "#B30000";
-  } else {
-    return "red";
-  }
+function entityColor(d) {
+  return d.data.name == traceEntityIdCurrent ? '#FF0000' : '#42aaff';
+}
 
-  function entityColor(data) {
-    const entityId = d.data.name.split("-");
-    return d.data.name == traceEntityIdCurrent ? "#FF0000" : "#046E97";
-    //return "#046E97";
+function circleColor(d) {
+  if (d.data.type.includes('entity')) {
+    return d.data.name == traceEntityIdCurrent ? '#AA0000' : '#046E97';
+  } else if (d.data.type.includes('shard')) {
+    return '#00C000';
+  } else if (d.data.type.includes('singleton')) {
+    return '#8F42EB';
+  } else if (d.data.type.includes('httpServer')) {
+    return '#F3B500';
+  } else if (d.data.type.includes('member')) {
+    return '#F17D00';
+  } else if (d.data.type.includes('cluster')) {
+    return '#B30000';
+  } else {
+    return 'red';
   }
 }
 
 function circleRadius(d) {
-  if (d.data.type.includes("entity")) {
+  if (d.data.type.includes('entity')) {
     return 8;
-  } else if (d.data.type.includes("shard")) {
+  } else if (d.data.type.includes('shard')) {
     return 12;
-  } else if (d.data.type.includes("member")) {
+  } else if (d.data.type.includes('member')) {
     return 22;
-  } else if (d.data.type.includes("cluster")) {
+  } else if (d.data.type.includes('cluster')) {
     return 10;
   } else {
     return 3;
@@ -219,13 +216,13 @@ function circleRadiusExit(d) {
 }
 
 function labelOffsetX(d) {
-  if (d.data.type.includes("entity")) {
+  if (d.data.type.includes('entity')) {
     return offset(d, 10);
-  } else if (d.data.type.includes("shard")) {
+  } else if (d.data.type.includes('shard')) {
     return offset(d, 14);
-  } else if (d.data.type.includes("member")) {
+  } else if (d.data.type.includes('member')) {
     return offset(d, 24);
-  } else if (d.data.type.includes("cluster")) {
+  } else if (d.data.type.includes('cluster')) {
     return offset(d, 12);
   } else {
     return offset(d, 5);
@@ -237,23 +234,29 @@ function labelOffsetX(d) {
 }
 
 function nodeCursor(d) {
-  return d.data.type.indexOf("member") >= 0 ? "pointer" : "default";
+  return d.data.type.indexOf('member') >= 0 ? 'pointer' : 'default';
 }
 
 function clickCircle(d) {
-  if (d.data.type.indexOf("member") >= 0) {
+  if (d.data.type.indexOf('member') >= 0) {
     sendWebSocketRequest(d.data.name);
+  } else if (d.data.type == 'entity') {
+    if (d.data.name == traceEntityIdCurrent) {
+      traceEntityIdCurrent = '';
+    } else {
+      traceEntityIdCurrent = d.data.name;
+    }
   }
 }
 
-let traceEntityIdNew = "";
-let traceEntityIdCurrent = "";
+let traceEntityIdNew = '';
+let traceEntityIdCurrent = '';
 
-d3.select("body").on("keydown", function () {
+d3.select('body').on('keydown', function () {
   if ((d3.event.key >= '0' && d3.event.key <= '9') || d3.event.key == '-') {
     traceEntityIdNew += d3.event.key;
-  } else if (d3.event.key == "Enter") {
+  } else if (d3.event.key == 'Enter') {
     traceEntityIdCurrent = traceEntityIdNew;
-    traceEntityIdNew = "";
+    traceEntityIdNew = '';
   }
 });
