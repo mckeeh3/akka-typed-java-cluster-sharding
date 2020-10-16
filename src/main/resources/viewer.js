@@ -176,65 +176,84 @@ function nodeId(d) {
 }
 
 function circleColor(d) {
-    if (d.data.type.includes('entity')) {
-        return '#046E97';
-    } else if (d.data.type.includes('shard')) {
-        return '#00C000';
-    } else if (d.data.type.includes('httpServer')) {
-        return '#F3B500';
-    } else if (d.data.type.includes('singleton')) {
-        return '#8F42EB'; // '#BA6000';
-    } else if (d.data.type.includes('member')) {
-        return '#F17D00';
-    } else if (d.data.type.includes('cluster')) {
-        return '#B30000';
-    } else {
-        return 'red';
-    }
+  if (d.data.type.includes("entity")) {
+    //return '#046E97';
+    return entityColor(d.data);
+  } else if (d.data.type.includes("shard")) {
+    return "#00C000";
+  } else if (d.data.type.includes("httpServer")) {
+    return "#F3B500";
+  } else if (d.data.type.includes("singleton")) {
+    return "#8F42EB";
+  } else if (d.data.type.includes("member")) {
+    return "#F17D00";
+  } else if (d.data.type.includes("cluster")) {
+    return "#B30000";
+  } else {
+    return "red";
+  }
+
+  function entityColor(data) {
+    const entityId = d.data.name.split("-");
+    return d.data.name == traceEntityIdCurrent ? "#FF0000" : "#046E97";
+    //return "#046E97";
+  }
 }
 
 function circleRadius(d) {
-    if (d.data.type.includes('entity')) {
-        return 8;
-    } else if (d.data.type.includes('shard')) {
-        return 12;
-    } else if (d.data.type.includes('member')) {
-        return 22;
-    } else if (d.data.type.includes('cluster')) {
-        return 10;
-    } else {
-        return 3;
-    }
+  if (d.data.type.includes("entity")) {
+    return 8;
+  } else if (d.data.type.includes("shard")) {
+    return 12;
+  } else if (d.data.type.includes("member")) {
+    return 22;
+  } else if (d.data.type.includes("cluster")) {
+    return 10;
+  } else {
+    return 3;
+  }
 }
 
 function circleRadiusExit(d) {
-    return 4 * circleRadius(d);
+  return 4 * circleRadius(d);
 }
 
 function labelOffsetX(d) {
-    if (d.data.type.includes('entity')) {
-        return offset(d, 10);
-    } else if (d.data.type.includes('shard')) {
-        return offset(d, 14);
-    } else if (d.data.type.includes('member')) {
-        return offset(d, 24);
-    } else if (d.data.type.includes('cluster')) {
-        return offset(d, 12);
-    } else {
-        return offset(d, 5);
-    }
+  if (d.data.type.includes("entity")) {
+    return offset(d, 10);
+  } else if (d.data.type.includes("shard")) {
+    return offset(d, 14);
+  } else if (d.data.type.includes("member")) {
+    return offset(d, 24);
+  } else if (d.data.type.includes("cluster")) {
+    return offset(d, 12);
+  } else {
+    return offset(d, 5);
+  }
 
-    function offset(d, distance) {
-        return d.x < Math.PI === !d.children ? distance : -distance;
-    }
+  function offset(d, distance) {
+    return d.x < Math.PI === !d.children ? distance : -distance;
+  }
 }
 
 function nodeCursor(d) {
-    return d.data.type.indexOf('member') >= 0 ? 'pointer' : 'default';
+  return d.data.type.indexOf("member") >= 0 ? "pointer" : "default";
 }
 
 function clickCircle(d) {
-    if (d.data.type.indexOf('member') >= 0) {
-        sendWebSocketRequest(d.data.name);
-    }
+  if (d.data.type.indexOf("member") >= 0) {
+    sendWebSocketRequest(d.data.name);
+  }
 }
+
+let traceEntityIdNew = "";
+let traceEntityIdCurrent = "";
+
+d3.select("body").on("keydown", function () {
+  if ((d3.event.key >= '0' && d3.event.key <= '9') || d3.event.key == '-') {
+    traceEntityIdNew += d3.event.key;
+  } else if (d3.event.key == "Enter") {
+    traceEntityIdCurrent = traceEntityIdNew;
+    traceEntityIdNew = "";
+  }
+});
