@@ -128,6 +128,16 @@ function update(hierarchy) {
     .style('opacity', 0.000001)
     .text(d => d.data.name);
 
+  nodeEnter.filter(d => d.data.type.includes('member'))
+    .append('text')
+    .attr('dy', '0.31em')
+    .attr('x', '-6')
+    .attr('transform', d => d.x >= Math.PI ? 'rotate(180)' : null)
+    .style('font-size', 24)
+    .style('fill', '#FFF')
+    .style('opacity', 1)
+    .text(memberNumber);
+
   nodeEnter.append('title')
     .text(d => d.data.type);
 
@@ -231,6 +241,10 @@ function labelOffsetX(d) {
   function offset(d, distance) {
     return d.x < Math.PI === !d.children ? distance : -distance;
   }
+}
+
+function memberNumber(d) {
+  return d.data.name.slice(-1);
 }
 
 function nodeCursor(d) {
