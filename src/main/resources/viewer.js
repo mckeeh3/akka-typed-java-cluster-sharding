@@ -44,6 +44,9 @@ const svg = d3.select('svg')
 const g = svg.append('g')
   .attr('transform', 'translate(' + width / 2 + ',' + height / 2 + ')');
 
+const gMembers = g.append('g')
+  .attr('class', 'members')
+
 const gLink = g.append('g')
   .attr('class', 'links')
   .attr('fill', 'none')
@@ -60,6 +63,11 @@ sendWebSocketRequest();
 setInterval(sendWebSocketRequest, 5000);
 
 function update(hierarchy) {
+  updateClusterView(hierarchy);
+  updateCropCircle(hierarchy);
+}
+
+function updateCropCircle(hierarchy) {
   const t1 = d3.transition()
     .duration(750);
 
@@ -133,6 +141,7 @@ function update(hierarchy) {
     .attr('dy', '0.31em')
     .attr('x', '-6')
     .attr('transform', d => d.x >= Math.PI ? 'rotate(180)' : null)
+    .on('click', clickCircle)
     .style('font-size', 24)
     .style('fill', '#FFF')
     .style('opacity', 1)
@@ -175,6 +184,49 @@ function update(hierarchy) {
   node.exit()
     .transition(t1)
     .remove();
+}
+
+function updateClusterView(hierarchy) {
+  const side = Math.min(width, height) / 30;
+  const members = gMembers.selectAll('g')
+    .data(memberData(hierarchy));
+  
+  const membersEnter = members.enter().append('g');
+
+  membersEnter.append('rect')
+    .attr('x', d => d.x)
+    .attr('y', d => d.y)
+    .attr('width', side)
+    .attr('height', side)
+    .style('fill', d => d.active ? '#30d35a' : '#555');
+
+  membersEnter.append('text')
+    .attr('x', d => d.x + side / 2)
+    .attr('y', d => d.y + side / 2)
+    .style('font-size', 24)
+    .style('fill', '#FFF')
+    .text(d => d.memberId - 2550);
+
+  members.select('rect')
+    .style('fill', d => d.active ? '#30d35a' : '#555');
+
+  function memberData(hierarchy) {
+    const members = [];
+    let memberId = 2551;
+    for (var row = 0; row < 3; row++) {
+      for (var col  = 0; col < 3; col++) {
+        const x = col * (side + 2) + side / 2 - width / 2;
+        const y = row * (side + 2) + side / 2 - height / 2;
+        members.push({ memberId: memberId, x: x, y: y, active: isActive(memberId)});
+        memberId++;
+      }
+    }
+    return members;
+  }
+
+  function isActive(m) {
+    return (hierarchy.children ? true : false) && hierarchy.children.findIndex(d => d.name.endsWith(m)) >= 0;
+  }
 }
 
 function linkId(d) {
