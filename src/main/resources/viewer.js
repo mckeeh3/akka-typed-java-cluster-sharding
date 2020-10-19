@@ -124,7 +124,7 @@ function updateCropCircle(hierarchy) {
     .attr('class', d => d.data.type)
     .attr('fill', circleColor)
     .attr('r', circleRadius)
-    .attr('cursor', nodeCursor)
+    .attr('cursor', 'pointer')
     .on('click', clickCircle)
     .style('opacity', 0.000001);
 
@@ -155,8 +155,12 @@ function updateCropCircle(hierarchy) {
     .attr('transform', d => `rotate(${d.x * 180 / Math.PI - 90}) translate(${d.y},0)`)
     .select('circle.entity')
       .attr('r', circleRadius)
-      .style('fill', entityColor) //'#42aaff')
+      .style('fill', entityColor)
       .style('opacity', 1.0);
+
+  node.transition(t2)
+    .select('circle.shard')
+      .style('fill', shardColor);
 
   node.transition(t2)
     .select('text')
@@ -192,24 +196,22 @@ function updateClusterView(hierarchy) {
   const members = gMembers.selectAll('g')
     .data(memberData(hierarchy));
   
-  const membersEnter = members.enter().append('g');
+  const membersEnter = members.enter().append('g')
+    .attr('cursor', 'pointer')
+    .on('click', clickMember);
 
   membersEnter.append('rect')
     .attr('x', d => d.x)
     .attr('y', d => d.y)
     .attr('width', side)
     .attr('height', side)
-    .attr('cursor', 'pointer')
-    .on('click', clickMember)
     .style('fill', d => d.active ? '#30d35a' : '#555');
 
   membersEnter.append('text')
     .attr('x', d => d.x + side / 5)
     .attr('y', d => d.y + side / 2)
-    .attr('cursor', 'pointer')
     .style('font-size', 24)
     .style('fill', '#FFF')
-    .on('click', clickMember)
     .text(d => d.memberId - 2550);
 
   members.select('rect')
@@ -254,12 +256,19 @@ function nodeId(d) {
 }
 
 function entityColor(d) {
-  return d.data.name == traceEntityIdCurrent ? '#FF0000' : '#42aaff';
+  return d.data.name == traceEntityId ? '#FF0000' : '#42aaff';
+}
+
+function shardColor(d) {
+  if (d.data.name == traceShardId) {
+    console.log(d.data);
+  }
+  return d.data.name == traceShardId ? '#FF0000' : '#00C000';
 }
 
 function circleColor(d) {
   if (d.data.type.includes('entity')) {
-    return d.data.name == traceEntityIdCurrent ? '#AA0000' : '#046E97';
+    return d.data.name == traceEntityId ? '#AA0000' : '#046E97';
   } else if (d.data.type.includes('shard')) {
     return '#00C000';
   } else if (d.data.type.includes('singleton')) {
@@ -315,19 +324,14 @@ function memberNumber(d) {
   return d.data.name.slice(-1);
 }
 
-function nodeCursor(d) {
-  return d.data.type.indexOf('member') >= 0 ? 'pointer' : 'default';
-}
-
 function clickCircle(d) {
   if (d.data.type.indexOf('member') >= 0) {
     sendWebSocketRequest(d.data.name);
   } else if (d.data.type == 'entity') {
-    if (d.data.name == traceEntityIdCurrent) {
-      traceEntityIdCurrent = '';
-    } else {
-      traceEntityIdCurrent = d.data.name;
-    }
+    traceEntityId = d.data.name == traceEntityId ? '' : d.data.name;
+    traceShardId = traceEntityId.length > 0 ? d.parent.data.name : '';
+  } else if (d.data.type == 'shard') {
+    traceShardId = d.data.name == traceShardId ? '' : d.data.name;
   }
 }
 
@@ -336,13 +340,14 @@ function clickMember(d) {
 }
 
 let traceEntityIdNew = '';
-let traceEntityIdCurrent = '';
+let traceEntityId = '';
+let traceShardId = '';
 
 d3.select('body').on('keydown', function () {
   if ((d3.event.key >= '0' && d3.event.key <= '9') || d3.event.key == '-') {
     traceEntityIdNew += d3.event.key;
   } else if (d3.event.key == 'Enter') {
-    traceEntityIdCurrent = traceEntityIdNew;
+    traceEntityId = traceEntityIdNew;
     traceEntityIdNew = '';
   }
 });
