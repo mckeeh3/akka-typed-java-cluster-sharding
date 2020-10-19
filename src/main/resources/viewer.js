@@ -141,6 +141,7 @@ function updateCropCircle(hierarchy) {
     .attr('dy', '0.31em')
     .attr('x', '-6')
     .attr('transform', d => d.x >= Math.PI ? 'rotate(180)' : null)
+    .attr('cursor', 'pointer')
     .on('click', clickCircle)
     .style('font-size', 24)
     .style('fill', '#FFF')
@@ -187,7 +188,7 @@ function updateCropCircle(hierarchy) {
 }
 
 function updateClusterView(hierarchy) {
-  const side = Math.min(width, height) / 30;
+  const side = Math.min(width, height) / 20;
   const members = gMembers.selectAll('g')
     .data(memberData(hierarchy));
   
@@ -198,17 +199,23 @@ function updateClusterView(hierarchy) {
     .attr('y', d => d.y)
     .attr('width', side)
     .attr('height', side)
+    .attr('cursor', 'pointer')
+    .on('click', clickMember)
     .style('fill', d => d.active ? '#30d35a' : '#555');
 
   membersEnter.append('text')
-    .attr('x', d => d.x + side / 2)
+    .attr('x', d => d.x + side / 5)
     .attr('y', d => d.y + side / 2)
+    .attr('cursor', 'pointer')
     .style('font-size', 24)
     .style('fill', '#FFF')
+    .on('click', clickMember)
     .text(d => d.memberId - 2550);
 
   members.select('rect')
     .style('fill', d => d.active ? '#30d35a' : '#555');
+
+  members.select('text');
 
   function memberData(hierarchy) {
     const members = [];
@@ -217,15 +224,24 @@ function updateClusterView(hierarchy) {
       for (var col  = 0; col < 3; col++) {
         const x = col * (side + 2) + side / 2 - width / 2;
         const y = row * (side + 2) + side / 2 - height / 2;
-        members.push({ memberId: memberId, x: x, y: y, active: isActive(memberId)});
+        members.push({ memberId: memberId, x: x, y: y, active: isActive(memberId), address: address(memberId) });
         memberId++;
       }
     }
     return members;
   }
 
+  function address(m) {
+    const idx = hierarchy.children
+      ? hierarchy.children.findIndex(d => d.name.endsWith(m))
+      : -1;
+    return idx >= 0 ? hierarchy.children[idx].name : '';
+  }
+
   function isActive(m) {
-    return (hierarchy.children ? true : false) && hierarchy.children.findIndex(d => d.name.endsWith(m)) >= 0;
+    return hierarchy.children
+      ? hierarchy.children.findIndex(d => d.name.endsWith(m)) >= 0
+      : false;
   }
 }
 
@@ -313,6 +329,10 @@ function clickCircle(d) {
       traceEntityIdCurrent = d.data.name;
     }
   }
+}
+
+function clickMember(d) {
+  sendWebSocketRequest(d.address);
 }
 
 let traceEntityIdNew = '';
