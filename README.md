@@ -40,10 +40,10 @@ The process of forwarding these messages to the right entities, which could be d
 [How it works](https://doc.akka.io/docs/akka/current/cluster-sharding.html#how-it-works)
 section of the cluster sharding documentation.
 
-![Visualization of cluster sharding](docs/images/akka-cluster-k8-3-pods.png)
+![Visualization of cluster sharding](docs/images/Akka-Cluster-Sharding-Viewer-01.png)
 <center>Figure 1, Visualization of cluster sharding</center><br/>
 
-The visualization in Figure 1 shows an example of cluster sharding. The blue leaf actors represent the entity actors. Each entity actor represents the state of an entity. The green circles that connect to the entity circles represent the running shard actors. In the example system there 15 shards configured. The shards connect to the orange shard region actors. These orange circles also represent other actors, such as the entity command and query actors. Also, the orange circles represent the root of the actor system on each cluster node.
+The visualization in Figure 1 shows an example of cluster sharding. The blue leaf actors represent the entity actors. Each entity actor represents the state of an entity. The green circles that connect to the entity circles represent the running shard actors. In the example system there 18 shards configured. The shards connect to the orange shard region actors. These orange circles also represent other actors, such as the entity command and query actors. Also, the orange circles represent the root of the actor system on each cluster node. The grid on the top left represents the state of each of the nine node in the cluster. Green tiles in the grid indicate running cluster nodes. Nodes that are down or have no running entity actors are gray.
 
 ### How it works
 
@@ -186,6 +186,8 @@ Please see [The Cluster Dashboard](https://github.com/mckeeh3/akka-typed-java-cl
 
 ### The Cluster Sharding Viewer ###
 
+The viewer can be opened one any currently running cluster node. First start a cluster.
+
 ~~~bash
 $ ./akka cluster start
 Starting 9 cluster nodes
@@ -200,9 +202,39 @@ Start node 8 on port 2558, management port 8558, HTTP port 9558
 Start node 9 on port 2559, management port 8559, HTTP port 9559
 ~~~
 
+Wait for a few moments for the cluster nodes to start then use the following command to open the cluster sharding viewer.
+
 ~~~bash
 $ ./akka cluster viewer 2
 ~~~
+
+Note that the above command opened the viewer using the HTTP server running on node 2.
+
+![Visualization of cluster sharding](docs/images/Akka-Cluster-Sharding-Viewer-01.png)
+<center>Figure 2, Visualization of cluster sharding</center><br/>
+
+The above image shows the viewer of an Akka Cluster running nine nodes. Note the colors of nodes 1 and 2. The purple color of node 1 indicates this is the oldest running node and the node where cluster singleton actors are currintly running. The yellow color of node 2 indicates that this is the node that the viewer web page is connected to. 
+
+The reason for highlighting the oldest node is to show how cluster singleton actors move when the oldest node changes. The image below shows what happened when node 1 is stopped. In this case, when node 1 is stopped, node 3 becomes the oldest node. Note that the color of node 3 has changed. 
+
+You can stop selected cluster nodes view the viewer web page by either clicking one of the large node circles or be clicking nodes in the top left grid. In this example, node 1 was stopped by clicking node 1 in the grid.
+
+![Cluster singleton moves to new oldest node](docs/images/Akka-Cluster-Sharding-Viewer-02.png)
+<center>Figure 2, Cluster singleton moves to new oldest node</center><br/>
+
+It is also possible to highlight and track selected entity actor. When you click one of the entity actor circles its color changes to red. Note that entity actor `2558-8` in the above image is red. Also note that the parent shard actor's color is red. 
+
+Highlighting entity and shard actors allows you to watch how entity and shard actors move between nodes as the cluster expands and contracts. As an example, here node 6 is stopped by clicking the node 6 circle of node 6 in the top left grid.
+
+![Cluster singleton moves to new oldest node](docs/images/Akka-Cluster-Sharding-Viewer-03.png)
+<center>Figure 3, Cluster singleton moves to new oldest node</center><br/>
+
+In the above image you can see that entity actor `2558-8` of shard `1` has "moved" to node 4. Also note that nodes 1 and 6 in the top left grid are dark to indicate that they are no longer running.
+
+![Cluster singleton moves to new oldest node](docs/images/Akka-Cluster-Sharding-Viewer-04.png)
+<center>Figure 4, Cluster singleton moves to new oldest node</center><br/>
+
+
 
 ~~~bash
 $ ./akka node start 1 6
