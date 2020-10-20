@@ -43,11 +43,11 @@ section of the cluster sharding documentation.
 ![Visualization of cluster sharding](docs/images/Akka-Cluster-Sharding-Viewer-01.png)
 <p align="center">Figure 1, Visualization of cluster sharding</p>
 
-The visualization in Figure 1 shows an example of cluster sharding. The blue leaf actors represent the entity actors. Each entity actor represents the state of an entity. The green circles that connect to the entity circles represent the running shard actors. In the example system there 18 shards configured. The shards connect to the orange shard region actors. These orange circles also represent other actors, such as the entity command and query actors. Also, the orange circles represent the root of the actor system on each cluster node. The grid on the top left represents the state of each of the nine node in the cluster. Green tiles in the grid indicate running cluster nodes. Nodes that are down or have no running entity actors are gray.
+The visualization in Figure 1 shows an example of cluster sharding. The blue leaf circles represent the entity actors. Each entity actor represents the state of an entity. The green circles that connect to the entity circles represent the running shard actors. In the example system there 18 shards configured. The shards connect to the orange shard region actors. These orange circles also represent other actors, such as the entity command and query actors. Also, the orange circles represent the root of the actor system on each cluster node. The grid on the top left represents the state of each of the nine node in the cluster. Green tiles in the grid indicate running cluster nodes. Nodes that are down or have no running entity actors are gray.
 
 ### How it works
 
-Cluster sharding is started in the `Main` class. The '' method contains the code for initializing cluster sharding for the demo entity actor. See the 
+Cluster sharding is started in the `Main` class. The `startClusterSharding` method contains the code for initializing cluster sharding for the demo entity actor. See the 
 [Cluster Sharding](https://doc.akka.io/docs/akka/current/typed/cluster-sharding.html#cluster-sharding) docuemtation for a description of how this works.
 
 ~~~java
@@ -182,7 +182,7 @@ Stop node 5 on port 2555
 Stop node 7 on port 2557
 ~~~
 
-Start node 3, 5, and 7 on ports 2553, 2555 and2557.
+Start node 3, 5, and 7 on ports 2553, 2555 and 2557.
 ~~~bash
 $ ./akka node start 3 5 7
 Start node 3 on port 2553, management port 8553, HTTP port 9553
@@ -259,7 +259,7 @@ Highlighting entity and shard actors allows you to watch how entity and shard ac
 ![Shard and entity actors restarted on new node](docs/images/Akka-Cluster-Sharding-Viewer-03.png)
 <p align="center">Figure 4, Shard and entity actors restarted on new node</p>
 
-In the above image, you can see that entity actor 2558-8 of shard 1 has "moved" to node 4. Also, note that nodes 1 and 6 in the top-left grid are dark to indicate that they are no longer running.
+In the above image, you can see that entity actor 2558-8 of shard 1 has "moved" to node 4. The actors are not actually moved. A new instance of each actor is started on the new nodes. Also, note that nodes 1 and 6 in the top-left grid are dark to indicate that they are no longer running.
 
 ![Shard and entity actors after rebalancing](docs/images/Akka-Cluster-Sharding-Viewer-04.png)
 <p align="center">Figure 5, Shard and entity actors after rebalancing</p>
@@ -272,4 +272,8 @@ Start node 1 on port 2551, management port 8551, HTTP port 9551
 Start node 6 on port 2556, management port 8556, HTTP port 9556
 ~~~
 
-In the above image, nodes 1 and 6 have been restarted. Note that nodes 1 and 6 changed from a dark to green background color in the top-left grid. Once these new nodes have joined the cluster, Akka cluster sharding rebalanced some of the shards to nodes 1 and 6. In this example, shard 1 with the red highlighted entity actor 2558-8 was rebalanced to node 1.
+In the above image, cluster nodes 1 and 6 have been restarted. Note that nodes 1 and 6 changed from a gray to green background color in the top-left grid. Once these new nodes have joined the cluster, Akka cluster sharding rebalanced some of the shards to nodes 1 and 6. In this example, shard 1 with the red highlighted entity actor 2558-8 was rebalanced to node 1.
+
+In the sample scenario shown in the above images, we tracked entity actor `2558-8`. This entity actor instance started on node 6. When node 6 was stopped, the actor was restarted on node 4. Finally, when nodes 1 and 6 were restarted it triggered a shard rebalance that resulted in entity actor `2558-8`being restarted on node 1.
+
+The key point is that all of the recovery and rebalancing was handled by cluster sharding. This dynamic actor allocation is an example of [location transparency](https://doc.akka.io/docs/akka/current/general/remoting.html#location-transparency). 
