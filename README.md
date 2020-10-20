@@ -242,4 +242,4 @@ Start node 1 on port 2551, management port 8551, HTTP port 9551
 Start node 6 on port 2556, management port 8556, HTTP port 9556
 ~~~
 
-In the above image, nodes 1 and 6 have been restarted. Note that nodes 1 and 6 changed from a dark to green background color in the top-left grid. Once these new nodes have joined the cluster, Akka cluster sharding rebalanced some of the shards to nodes 1 and 6. In this example, shard 1 with the red highlighted entity actor 2558-8 moved to node 1.
+In the above image, nodes 1 and 6 have been restarted. Note that nodes 1 and 6 changed from a dark to green background color in the top-left grid. Once these new nodes have joined the cluster, Akka cluster sharding rebalanced some of the shards to nodes 1 and 6. In this example, shard 1 with the red highlighted entity actor 2558-8 was rebalanced to node 1.
