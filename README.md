@@ -182,7 +182,7 @@ extension
 
 ### The Cluster Dashboard ###
 
-Please see [The Cluster Dashboard](https://github.com/mckeeh3/akka-typed-java-cluster-singleton#the-cluster-dashboard) in the Cluster Singleton project.
+Please see [The Cluster Dashboard](https://github.com/mckeeh3/akka-typed-java-cluster-singleton#the-cluster-dashboard) in the Cluster Singleton project. This project starts with the prior Akka Cluster Singleton project then adding an Akka Cluster Sharding example. Therefore all of the documentation of the prior project also applies to this project.
 
 ### The Cluster Sharding Viewer ###
 
