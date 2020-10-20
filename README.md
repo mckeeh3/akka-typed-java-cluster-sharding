@@ -226,18 +226,20 @@ It is also possible to highlight and track selected entity actor. When you click
 
 Highlighting entity and shard actors allows you to watch how entity and shard actors move between nodes as the cluster expands and contracts. As an example, here node 6 is stopped by clicking the node 6 circle of node 6 in the top left grid.
 
-![Cluster singleton moves to new oldest node](docs/images/Akka-Cluster-Sharding-Viewer-03.png)
-<p align="center">Figure 3, Cluster singleton moves to new oldest node</p>
+![Shard and entity actors restarted on new node](docs/images/Akka-Cluster-Sharding-Viewer-03.png)
+<p align="center">Figure 3, Shard and entity actors restarted on new node</p>
 
 In the above image you can see that entity actor `2558-8` of shard `1` has "moved" to node 4. Also note that nodes 1 and 6 in the top left grid are dark to indicate that they are no longer running.
 
-![Cluster singleton moves to new oldest node](docs/images/Akka-Cluster-Sharding-Viewer-04.png)
-<p align="center">Figure 4, Cluster singleton moves to new oldest node</p>
+![Shard and entity actors after rebalancing](docs/images/Akka-Cluster-Sharding-Viewer-04.png)
+<p align="center">Figure 4, Shard and entity actors after rebalancing</p>
 
-
+Shards and their associated entity actors may be rebalanced When new nodes are added to the cluster. This rebalancing is done to more evenly distribute the workload across the cluster. 
 
 ~~~bash
 $ ./akka node start 1 6
 Start node 1 on port 2551, management port 8551, HTTP port 9551
 Start node 6 on port 2556, management port 8556, HTTP port 9556
 ~~~
+
+In the above image nodes 1 and 6 have been restarted. Note that nodes 1 and 6 changed from a dark to green background color in the top left grid. Once these new nodes have joined that cluster Akka cluster sharding rebalanced some of the shards to nodes 1 and 6. In this example, shard `1` with the red highlighted entity actor `2558-8` moved to node 1. 
