@@ -37,7 +37,7 @@ In this example project, the entities represent simple identifier and value. In 
 Two actors are used to simulate clients that are sending messages to entities. The `EntityCommandActor` and the `EntityQueryActor` randomly generate messages to specific entities. These two actors are used to simulate incoming service requests. In a real implementation, the service would receive incoming messages, for example from an HTTP request, and forward those messages to specific entities to handle the request messages.
 
 The process of forwarding these messages to the right entities, which could be distributed across multiple JVMs running in a cluster, is handled by cluster sharding. To send a message to an entity the sender simply sends the message to a shard region actor. The shard region actor is responsible for forwarding the message to the correct entity actor. The actual mechanics of this process is described in the
-[How it works](https://doc.akka.io/docs/akka/current/cluster-sharding.html#how-it-works)
+[Cluster Sharding concepts](https://doc.akka.io/docs/akka/current/typed/cluster-sharding-concepts.html#cluster-sharding-concepts)
 section of the cluster sharding documentation.
 
 ![Visualization of cluster sharding](docs/images/Akka-Cluster-Sharding-Viewer-01.png)
