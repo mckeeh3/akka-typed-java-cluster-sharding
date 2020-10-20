@@ -4,8 +4,8 @@ This is an Akka Cluster project that includes an example use of
 [Cluster Sharding](https://doc.akka.io/docs/akka/current/typed/cluster-sharding.html),
 [Cluster Singleton](https://doc.akka.io/docs/akka/current/typed/cluster-singleton.html#cluster-singleton),
 the [Receptionist](https://doc.akka.io/docs/akka/current/typed/actor-discovery.html#receptionist),
-[Cluster Subscriptions](https://doc.akka.io/docs/akka/current/typed/cluster.html#cluster-subscriptions).
-and cluster dashboard.
+[Cluster Subscriptions](https://doc.akka.io/docs/akka/current/typed/cluster.html#cluster-subscriptions),
+cluster dashboard, and cluster sharding viewer.
 
 This project is one in a series of projects that starts with a simple Akka Cluster project and progressively builds up to examples of event sourcing and command query responsibility segregation - CQRS.
 
@@ -47,13 +47,43 @@ The visualization in Figure 1 shows an example of cluster sharding. The blue lea
 
 ### How it works
 
+Cluster sharding is started in the `Main` class. The '' method contains the code for initializing cluster sharding for the demo entity actor. See the 
+[Cluster Sharding](https://doc.akka.io/docs/akka/current/typed/cluster-sharding.html#cluster-sharding) docuemtation for a description of how this works.
+
+~~~java
+  private static void startClusterSharding(final ActorSystem<?> actorSystem, ActorRef<HttpServer.Statistics> httpServerActorRef) {
+    ClusterSharding clusterSharding = ClusterSharding.get(actorSystem);
+    clusterSharding.init(
+      Entity.of(
+        EntityActor.entityTypeKey,
+        entityContext ->
+          EntityActor.create(entityContext.getEntityId(), httpServerActorRef)
+      )
+      .withStopMessage(EntityActor.Passivate.INSTANCE)
+    );
+  }
+~~~
+
+The `EntityActor` is much like any other actor, it receives and processes incoming messages. The following `createReceive` method implementation defines the three messages that this actor handles.
+
+~~~java
+  @Override
+  public Receive<Command> createReceive() {
+    return newReceiveBuilder()
+    .onMessage(ChangeValue.class, this::onChangeValue)
+    .onMessage(GetValue.class, this::onGetValue)
+    .onMessage(Passivate.class, msg -> onPassivate())
+    .build();
+  }
+~~~
+
 TODO
 
 ### Installation
 
 ~~~bash
-$ git clone https://github.com/mckeeh3/akka-typed-java-cluster-singleton.git
-$ cd akka-typed-java-cluster-singleton
+$ git clone https://github.com/mckeeh3/akka-typed-java-cluster-sharding.git
+$ cd akka-typed-java-cluster-sharding
 $ mvn clean package
 ~~~
 
