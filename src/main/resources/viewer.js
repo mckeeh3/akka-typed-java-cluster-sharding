@@ -260,9 +260,6 @@ function entityColor(d) {
 }
 
 function shardColor(d) {
-  if (d.data.name == traceShardId) {
-    console.log(d.data);
-  }
   return d.data.name == traceShardId ? '#FF0000' : '#00C000';
 }
 
@@ -270,7 +267,7 @@ function circleColor(d) {
   if (d.data.type.includes('entity')) {
     return d.data.name == traceEntityId ? '#AA0000' : '#046E97';
   } else if (d.data.type.includes('shard')) {
-    return '#00C000';
+    return d.data.name == traceShardId ? '#AA0000' : '#00C000';
   } else if (d.data.type.includes('singleton')) {
     return '#8F42EB';
   } else if (d.data.type.includes('httpServer')) {

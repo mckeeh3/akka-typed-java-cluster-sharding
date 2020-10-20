@@ -186,3 +186,26 @@ Please see [The Cluster Dashboard](https://github.com/mckeeh3/akka-typed-java-cl
 
 ### The Cluster Sharding Viewer ###
 
+~~~bash
+$ ./akka cluster start
+Starting 9 cluster nodes
+Start node 1 on port 2551, management port 8551, HTTP port 9551
+Start node 2 on port 2552, management port 8552, HTTP port 9552
+Start node 3 on port 2553, management port 8553, HTTP port 9553
+Start node 4 on port 2554, management port 8554, HTTP port 9554
+Start node 5 on port 2555, management port 8555, HTTP port 9555
+Start node 6 on port 2556, management port 8556, HTTP port 9556
+Start node 7 on port 2557, management port 8557, HTTP port 9557
+Start node 8 on port 2558, management port 8558, HTTP port 9558
+Start node 9 on port 2559, management port 8559, HTTP port 9559
+~~~
+
+~~~bash
+$ ./akka cluster viewer 2
+~~~
+
+~~~bash
+$ ./akka node start 1 6
+Start node 1 on port 2551, management port 8551, HTTP port 9551
+Start node 6 on port 2556, management port 8556, HTTP port 9556
+~~~
