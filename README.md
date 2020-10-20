@@ -211,7 +211,7 @@ $ ./akka cluster viewer 2
 Note that the above command opened the viewer using the HTTP server running on node 2.
 
 ![Visualization of cluster sharding](docs/images/Akka-Cluster-Sharding-Viewer-01.png)
-<center>Figure 2, Visualization of cluster sharding</center><br/>
+<p aligh="center">Figure 2, Visualization of cluster sharding</p>
 
 The above image shows the viewer of an Akka Cluster running nine nodes. Note the colors of nodes 1 and 2. The purple color of node 1 indicates this is the oldest running node and the node where cluster singleton actors are currintly running. The yellow color of node 2 indicates that this is the node that the viewer web page is connected to. 
 
