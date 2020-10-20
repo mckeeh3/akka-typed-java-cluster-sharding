@@ -182,11 +182,11 @@ extension
 
 ### The Cluster Dashboard ###
 
-Please see [The Cluster Dashboard](https://github.com/mckeeh3/akka-typed-java-cluster-singleton#the-cluster-dashboard) in the Cluster Singleton project. This project starts with the prior Akka Cluster Singleton project then adding an Akka Cluster Sharding example. Therefore all of the documentation of the prior project also applies to this project.
+Please see [The Cluster Dashboard](https://github.com/mckeeh3/akka-typed-java-cluster-singleton#the-cluster-dashboard) in the Cluster Singleton project. This project starts with the previous Akka Cluster Singleton project than adding an Akka Cluster Sharding example. Therefore all of the documentation of the last project also applies to this project.
 
 ### The Cluster Sharding Viewer ###
 
-The viewer can be opened one any currently running cluster node. First start a cluster.
+The viewer can be opened on any currently running cluster node. First, start a cluster.
 
 ~~~bash
 $ ./akka cluster start
@@ -202,7 +202,7 @@ Start node 8 on port 2558, management port 8558, HTTP port 9558
 Start node 9 on port 2559, management port 8559, HTTP port 9559
 ~~~
 
-Wait for a few moments for the cluster nodes to start then use the following command to open the cluster sharding viewer.
+Wait for a few moments for the cluster nodes to start, then use the following command to open the cluster sharding viewer.
 
 ~~~bash
 $ ./akka cluster viewer 2
@@ -213,26 +213,26 @@ Note that the above command opened the viewer using the HTTP server running on n
 ![Visualization of cluster sharding](docs/images/Akka-Cluster-Sharding-Viewer-01.png)
 <p align="center">Figure 2, Visualization of cluster sharding</p>
 
-The above image shows the viewer of an Akka Cluster running nine nodes. Note the colors of nodes 1 and 2. The purple color of node 1 indicates this is the oldest running node and the node where cluster singleton actors are currintly running. The yellow color of node 2 indicates that this is the node that the viewer web page is connected to. 
+The above image shows the viewer of an Akka Cluster running nine nodes. Note the colors of nodes 1 and 2. The purple color of node 1 indicates this is the oldest running node and the node where cluster singleton actors are currently running. The yellow color of node 2 shows that this is the node that the viewer web page is connected to from the browser.
 
-The reason for highlighting the oldest node is to show how cluster singleton actors move when the oldest node changes. The image below shows what happened when node 1 is stopped. In this case, when node 1 is stopped, node 3 becomes the oldest node. Note that the color of node 3 has changed. 
+The reason for highlighting the oldest node is to show how cluster singleton actors move when the oldest node changes. The image below shows what happened when node 1 is stopped. In this case, when node 1 is stopped, node 3 becomes the oldest node. Note that the color of node 3 has changed.
 
-You can stop selected cluster nodes view the viewer web page by either clicking one of the large node circles or be clicking nodes in the top left grid. In this example, node 1 was stopped by clicking node 1 in the grid.
+You can stop selected cluster nodes from the viewer's web page by either clicking one of the large node circles or be clicking nodes in the top left grid. In this example, node 1 was stopped by clicking node 1 in the grid.
 
 ![Cluster singleton moves to new oldest node](docs/images/Akka-Cluster-Sharding-Viewer-02.png)
-<p align="center">Figure 2, Cluster singleton moves to new oldest node</p>
+<p align="center">Figure 3, Cluster singleton moves to new oldest node</p>
 
-It is also possible to highlight and track selected entity actor. When you click one of the entity actor circles its color changes to red. Note that entity actor `2558-8` in the above image is red. Also note that the parent shard actor's color is red. 
+It is also possible to highlight and track the selected entity actor. When you click one of the entity actor circles, its color changes to red. Note that entity actor 2558-8 in the above image is red. Also, note that the parent shard actor's color is red.
 
-Highlighting entity and shard actors allows you to watch how entity and shard actors move between nodes as the cluster expands and contracts. As an example, here node 6 is stopped by clicking the node 6 circle of node 6 in the top left grid.
+Highlighting entity and shard actors allows you to watch how entity and shard actors move between nodes as the cluster expands and contracts. Here, node 6 is stopped by clicking the node 6 circle or node 6 in the top-left grid.
 
 ![Shard and entity actors restarted on new node](docs/images/Akka-Cluster-Sharding-Viewer-03.png)
-<p align="center">Figure 3, Shard and entity actors restarted on new node</p>
+<p align="center">Figure 4, Shard and entity actors restarted on new node</p>
 
-In the above image you can see that entity actor `2558-8` of shard `1` has "moved" to node 4. Also note that nodes 1 and 6 in the top left grid are dark to indicate that they are no longer running.
+In the above image, you can see that entity actor 2558-8 of shard 1 has "moved" to node 4. Also, note that nodes 1 and 6 in the top-left grid are dark to indicate that they are no longer running.
 
 ![Shard and entity actors after rebalancing](docs/images/Akka-Cluster-Sharding-Viewer-04.png)
-<p align="center">Figure 4, Shard and entity actors after rebalancing</p>
+<p align="center">Figure 5, Shard and entity actors after rebalancing</p>
 
 Shards and their associated entity actors may be rebalanced When new nodes are added to the cluster. This rebalancing is done to more evenly distribute the workload across the cluster. 
 
@@ -242,4 +242,4 @@ Start node 1 on port 2551, management port 8551, HTTP port 9551
 Start node 6 on port 2556, management port 8556, HTTP port 9556
 ~~~
 
-In the above image nodes 1 and 6 have been restarted. Note that nodes 1 and 6 changed from a dark to green background color in the top left grid. Once these new nodes have joined that cluster Akka cluster sharding rebalanced some of the shards to nodes 1 and 6. In this example, shard `1` with the red highlighted entity actor `2558-8` moved to node 1. 
+In the above image, nodes 1 and 6 have been restarted. Note that nodes 1 and 6 changed from a dark to green background color in the top-left grid. Once these new nodes have joined the cluster, Akka cluster sharding rebalanced some of the shards to nodes 1 and 6. In this example, shard 1 with the red highlighted entity actor 2558-8 moved to node 1.
