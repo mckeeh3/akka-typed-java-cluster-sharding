@@ -33,12 +33,18 @@ class HttpServerActor {
   }
 
   private Behavior<HttpServer.Statistics> behavior() {
-    return Behaviors.receive(HttpServer.Statistics.class).onMessage(Listeners.class, this::onListeners)
+    return Behaviors.receive(HttpServer.Statistics.class)
+        .onMessage(Listeners.class, this::onListeners)
         .onMessage(HttpServer.ClusterAwareStatistics.class, this::onClusterAwareStatistics)
         .onMessage(HttpServer.SingletonAwareStatistics.class, this::onSingletonAwareStatistics)
         .onMessage(BroadcastEntityAction.class, this::onBroadcastEntityAction)
         .onMessage(HttpServer.EntityAction.class, this::onNotifyEntityAction)
         .build();
+  }
+
+  private Behavior<HttpServer.Statistics> onListeners(Listeners listeners) {
+    serviceInstances = listeners.listing.getAllServiceInstances(serviceKey);
+    return Behaviors.same();
   }
 
   private Behavior<HttpServer.Statistics> onClusterAwareStatistics(HttpServer.ClusterAwareStatistics clusterAwareStatistics) {
@@ -75,11 +81,6 @@ class HttpServerActor {
 
     actorContext.getSystem().receptionist().tell(Receptionist.register(serviceKey, actorContext.getSelf()));
     actorContext.getSystem().receptionist().tell(Receptionist.subscribe(serviceKey, listingActorRef));
-  }
-
-  private Behavior<HttpServer.Statistics> onListeners(Listeners listeners) {
-    serviceInstances = listeners.listing.getAllServiceInstances(serviceKey);
-    return Behaviors.same();
   }
 
   private static class Listeners implements HttpServer.Statistics {

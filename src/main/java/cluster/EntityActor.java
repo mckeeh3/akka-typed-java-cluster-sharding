@@ -52,11 +52,11 @@ public class EntityActor extends AbstractBehavior<EntityActor.Command> {
       log().info("initialize {}", state);
 
       changeValue.replyTo.tell(new ChangeValueAck("initialize", changeValue.id, changeValue.value));
-      notifyStart();
+      notifyHttpServer("start");
     } else {
       log().info("update {} {} -> {}", state.id, state.value, changeValue.value);
       state.value = changeValue.value;
-      changeValue.replyTo.tell(new ChangeValueAck("initialize", changeValue.id, changeValue.value));
+      changeValue.replyTo.tell(new ChangeValueAck("update", changeValue.id, changeValue.value));
     }
     return this;
   }
@@ -66,7 +66,7 @@ public class EntityActor extends AbstractBehavior<EntityActor.Command> {
     if (state == null) {
       getValue.replyTo.tell(new GetValueAckNotFound(getValue.id));
       state = new State(getValue.id, new Value(""));
-      notifyStart();
+      notifyHttpServer("start");
     } else {
       getValue.replyTo.tell(new GetValueAck(state.id, state.value));
     }
@@ -75,18 +75,12 @@ public class EntityActor extends AbstractBehavior<EntityActor.Command> {
 
   private Behavior<Command> onPassivate() {
     log().info("Stop {}", entityId);
-    notifyStop();
+    notifyHttpServer("stop");
     return Behaviors.stopped();
   }
 
-  private void notifyStart() {
-    final EntityAction entityAction = new HttpServer.EntityAction(memberId, shardId, entityId, "start");
-    final BroadcastEntityAction broadcastEntityAction = new BroadcastEntityAction(entityAction);
-    httpServerActorRef.tell(broadcastEntityAction);
-  }
-
-  private void notifyStop() {
-    final EntityAction entityAction = new EntityAction(memberId, shardId, entityId, "stop");
+  private void notifyHttpServer(String action) {
+    final EntityAction entityAction = new EntityAction(memberId, shardId, entityId, action);
     final BroadcastEntityAction broadcastEntityAction = new BroadcastEntityAction(entityAction);
     httpServerActorRef.tell(broadcastEntityAction);
   }

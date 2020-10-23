@@ -77,6 +77,78 @@ The `EntityActor` is much like any other actor, it receives and processes incomi
   }
 ~~~
 
+When a `ChangeValue` messages is received the `onChangeValue` method, shown below, is invoked.
+
+~~~java
+  private Behavior<Command> onChangeValue(ChangeValue changeValue) {
+    if (state == null) {
+      state = new State(changeValue.id, changeValue.value);
+      log().info("initialize {}", state);
+
+      changeValue.replyTo.tell(new ChangeValueAck("initialize", changeValue.id, changeValue.value));
+      notifyHttpServer("start");
+    } else {
+      log().info("update {} {} -> {}", state.id, state.value, changeValue.value);
+      state.value = changeValue.value;
+      changeValue.replyTo.tell(new ChangeValueAck("update", changeValue.id, changeValue.value));
+    }
+    return this;
+  }
+~~~
+
+The `onChangeValue` method's logic is relatively simple in this example. In a real entity actor implementation, the message handler messages typically involve some form of command/request validation followed by persisting zero, one or more events, followed by a state change after completing a persist operation.
+
+One thing to take note of is how this actor replies to the command message sender. When a reply is sent after the entity actor is first started is slightly different than when replying after the first command. 
+
+~~~java
+      changeValue.replyTo.tell(new ChangeValueAck("initialize", changeValue.id, changeValue.value));
+
+      changeValue.replyTo.tell(new ChangeValueAck("update", changeValue.id, changeValue.value));
+~~~
+
+On the first command received by a newly started entity actor, the `notifyHttpServer` method is also invoked. This method is used to send a message to the `HttpServerActor`. Each entity actor notifies the HTTP server actor when it starts and stops. These notifications are used to modify the cluster sharding state data that is rendered in the Cluster Sharding web viewer.
+
+~~~java
+  private void notifyHttpServer(String action) {
+    final EntityAction entityAction = new EntityAction(memberId, shardId, entityId, action);
+    final BroadcastEntityAction broadcastEntityAction = new BroadcastEntityAction(entityAction);
+    httpServerActorRef.tell(broadcastEntityAction);
+  }
+~~~
+
+The `notifyHttpServer` method sends a `BroadcastEntityAction` message. When a `broadcastEntityAction` message is received it is handled in the `onBroadcastEntityAction` method shown below.
+
+~~~java
+  private Behavior<HttpServer.Statistics> onBroadcastEntityAction(BroadcastEntityAction broadcastEntityAction) {
+    serviceInstances.stream()
+        .forEach(httpServeractorRef -> httpServeractorRef.tell(broadcastEntityAction.entityAction));
+    return Behaviors.same();
+  }
+
+  private Behavior<HttpServer.Statistics> onNotifyEntityAction(HttpServer.EntityAction entityAction) {
+    log().info("{}", entityAction);
+    httpServer.load(entityAction);
+    return Behaviors.same();
+  }
+~~~
+
+There is one instance of an `HttpServerActor` running on each node in the cluster. When these actors start up they register and subscribe with the [Akka Cluster Receptionsit](https://doc.akka.io/docs/akka/current/typed/actor-discovery.html#cluster-receptionist). The receptionist is used by each of the `HttpServerActor` instance to communicate with each other. In this case, when notified that a given entity actor has started or stopped, this information is broadcast from the receiving actor to all of the other `HttpServerActor' instance running in the cluster.
+
+Messages are sent to entity actors from two other actors, `EntityCommandActor` and `EntityQueryActor`. These two actors use a timer to send command and query messages to random entity actors periodically. 
+
+~~~java
+  private Behavior<EntityActor.Command> onTick() {
+    final String entityId = EntityActor.entityId(nodePort, (int) Math.round(Math.random() * entitiesPerNode));
+    final EntityActor.Id id = new EntityActor.Id(entityId);
+    final EntityActor.Value value = new EntityActor.Value(new Date());
+    final EntityRef<Command> entityRef = clusterSharding.entityRefFor(EntityActor.entityTypeKey, entityId);
+    entityRef.tell(new EntityActor.ChangeValue(id, value, actorContext.getSelf()));
+    return this;
+  }
+~~~
+
+These messages are sent via the onTick method. Note the process used to send these messages to the entity actors. The actual location of the entity actors is handled by cluster sharding. The sending actors send messages to cluster sharding, and it routes the messages to the targeted entity actor. 
+
 TODO
 
 ### Installation
