@@ -116,7 +116,7 @@ On the first command received by a newly started entity actor, the `notifyHttpSe
   }
 ~~~
 
-The `notifyHttpServer` method sends a `BroadcastEntityAction` message. When a `broadcastEntityAction` message is received it is handled in the `onBroadcastEntityAction` method shown below.
+The `notifyHttpServer` method sends a `BroadcastEntityAction` message. When a `broadcastEntityAction` message is received by an `HttpServerActor` it is handled in the `onBroadcastEntityAction` method shown below.
 
 ~~~java
   private Behavior<HttpServer.Statistics> onBroadcastEntityAction(BroadcastEntityAction broadcastEntityAction) {
@@ -124,7 +124,15 @@ The `notifyHttpServer` method sends a `BroadcastEntityAction` message. When a `b
         .forEach(httpServeractorRef -> httpServeractorRef.tell(broadcastEntityAction.entityAction));
     return Behaviors.same();
   }
+~~~
 
+There is one instance of an `HttpServerActor` running on each node in the cluster. When these actors start up they register and subscribe with the [Akka Cluster Receptionsit](https://doc.akka.io/docs/akka/current/typed/actor-discovery.html#cluster-receptionist). The receptionist is used by each of the `HttpServerActor` instance to communicate with each other. In this case, when notified that a given entity actor has started or stopped, this information is broadcast from the receiving actor to all of the other `HttpServerActor' instance running in the cluster.
+
+When actors register with the receptionist, they are sharing their actor reference with the receptionist. The receptionist adds the registrant's actor ref to a list and then sends the updated list to all subscribers. In this case, each HttpServerActors both register and subscribe with the receptionist.
+
+The code in the `onBroadcastEntityAction` method sends an `EntityAction`  message to each receptionist subscriber, all of the currently running `HttpServerActors`. When an `HttpServerActor' receives a `EntityAction` message the 'onNotifyEntityAction` method is invoked.
+
+~~~java
   private Behavior<HttpServer.Statistics> onNotifyEntityAction(HttpServer.EntityAction entityAction) {
     log().info("{}", entityAction);
     httpServer.load(entityAction);
@@ -132,7 +140,7 @@ The `notifyHttpServer` method sends a `BroadcastEntityAction` message. When a `b
   }
 ~~~
 
-There is one instance of an `HttpServerActor` running on each node in the cluster. When these actors start up they register and subscribe with the [Akka Cluster Receptionsit](https://doc.akka.io/docs/akka/current/typed/actor-discovery.html#cluster-receptionist). The receptionist is used by each of the `HttpServerActor` instance to communicate with each other. In this case, when notified that a given entity actor has started or stopped, this information is broadcast from the receiving actor to all of the other `HttpServerActor' instance running in the cluster.
+The `onNotifyEntityAction` method updates the information used in the web cluster sharding viewer.
 
 Messages are sent to entity actors from two other actors, `EntityCommandActor` and `EntityQueryActor`. These two actors use a timer to send command and query messages to random entity actors periodically. 
 
@@ -148,8 +156,6 @@ Messages are sent to entity actors from two other actors, `EntityCommandActor` a
 ~~~
 
 These messages are sent via the onTick method. Note the process used to send these messages to the entity actors. The actual location of the entity actors is handled by cluster sharding. The sending actors send messages to cluster sharding, and it routes the messages to the targeted entity actor. 
-
-TODO
 
 ### Installation
 
