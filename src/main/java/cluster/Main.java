@@ -64,7 +64,7 @@ class Main {
   }
 
   private static void startClusterSharding(final ActorSystem<?> actorSystem, ActorRef<HttpServer.Statistics> httpServerActorRef) {
-    ClusterSharding clusterSharding = ClusterSharding.get(actorSystem);
+    final ClusterSharding clusterSharding = ClusterSharding.get(actorSystem);
     clusterSharding.init(
       Entity.of(
         EntityActor.entityTypeKey,
