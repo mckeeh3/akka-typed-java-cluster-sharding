@@ -75,7 +75,8 @@ class HttpServer {
         path("viewer.js", () -> getFromResource("viewer.js", ContentTypes.APPLICATION_JSON)),
         path("d3.v5.js", () -> getFromResource("d3.v5.js", MediaTypes.APPLICATION_JAVASCRIPT.toContentTypeWithMissingCharset())),
         path("viewer-entities", () -> handleWebSocketMessages(handleClientMessages())),
-        path("favicon.ico", () -> getFromResource("favicon.ico", MediaTypes.IMAGE_X_ICON.toContentType())));
+        path("favicon.ico", () -> getFromResource("favicon.ico", MediaTypes.IMAGE_X_ICON.toContentType()))
+    );
   }
 
   private Route clusterState() {
