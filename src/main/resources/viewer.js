@@ -37,7 +37,7 @@ const tree = d3.tree().size([2 * Math.PI, radius - 75]);
 const svg = d3.select('svg')
   .style('width', width)
   .style('height', height)
-  .style('padding', '10px')
+  .style('padding', '0px')
   .style('box-sizing', 'border-box')
   .style('font', 'sans-serif');
 
@@ -160,7 +160,15 @@ function updateCropCircle(hierarchy) {
 
   node.transition(t2)
     .select('circle.shard')
-      .style('fill', shardColor);
+      .attr('r', circleRadius)
+      .style('fill', shardColor)
+      .style('opacity', 1.0);
+
+  node.transition(t2)
+    .select('circle.member')
+      .attr('r', circleRadius)
+      .style('fill', circleColor)
+      .style('opacity', 1.0);
 
   node.transition(t2)
     .select('text')
