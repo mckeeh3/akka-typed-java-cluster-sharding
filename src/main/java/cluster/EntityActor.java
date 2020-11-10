@@ -82,7 +82,13 @@ public class EntityActor extends AbstractBehavior<EntityActor.Command> {
   }
 
   private void notifyHttpServer(String action, ActorRef<Command> sender) {
-    final String address = sender == null ? null : sender.path().address().toString();
+    //final String address = sender.path().address().getHost().isPresent() ? sender.path().address().toString() : memberId;
+    //final String address = sender == null ? null : sender.path().address().toString();
+    final String address = sender == null 
+      ? null 
+      : sender.path().address().getHost().isPresent() 
+        ? sender.path().address().toString() 
+        : memberId;
     final EntityAction entityAction = new EntityAction(memberId, shardId, entityId, action, address);
     final BroadcastEntityAction broadcastEntityAction = new BroadcastEntityAction(entityAction);
     httpServerActorRef.tell(broadcastEntityAction);
