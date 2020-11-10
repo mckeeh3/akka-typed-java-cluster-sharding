@@ -18,8 +18,8 @@ class HttpServerActor {
   private final ActorContext<HttpServer.Statistics> actorContext;
   private final HttpServer httpServer;
   private Set<ActorRef<HttpServer.Statistics>> serviceInstances;
-  private static final ServiceKey<HttpServer.Statistics> serviceKey = ServiceKey.create(HttpServer.Statistics.class,
-      HttpServer.class.getSimpleName());
+  private static final ServiceKey<HttpServer.Statistics> serviceKey = 
+    ServiceKey.create(HttpServer.Statistics.class, HttpServer.class.getSimpleName());
 
   static Behavior<HttpServer.Statistics> create() {
     return Behaviors.setup(context -> new HttpServerActor(context).behavior());

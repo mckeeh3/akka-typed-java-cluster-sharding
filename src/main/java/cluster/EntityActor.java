@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 
 import org.slf4j.Logger;
 
+import akka.actor.Address;
 import akka.actor.typed.ActorRef;
 import akka.actor.typed.Behavior;
 import akka.actor.typed.javadsl.AbstractBehavior;
@@ -40,10 +41,10 @@ public class EntityActor extends AbstractBehavior<EntityActor.Command> {
   @Override
   public Receive<Command> createReceive() {
     return newReceiveBuilder()
-    .onMessage(ChangeValue.class, this::onChangeValue)
-    .onMessage(GetValue.class, this::onGetValue)
-    .onMessage(Passivate.class, msg -> onPassivate())
-    .build();
+      .onMessage(ChangeValue.class, this::onChangeValue)
+      .onMessage(GetValue.class, this::onGetValue)
+      .onMessage(Passivate.class, msg -> onPassivate())
+      .build();
   }
   
   private Behavior<Command> onChangeValue(ChangeValue changeValue) {
@@ -52,11 +53,12 @@ public class EntityActor extends AbstractBehavior<EntityActor.Command> {
       log().info("initialize {}", state);
 
       changeValue.replyTo.tell(new ChangeValueAck("initialize", changeValue.id, changeValue.value));
-      notifyHttpServer("start");
+      notifyHttpServer("start", changeValue.replyTo);
     } else {
       log().info("update {} {} -> {}", state.id, state.value, changeValue.value);
       state.value = changeValue.value;
       changeValue.replyTo.tell(new ChangeValueAck("update", changeValue.id, changeValue.value));
+      notifyHttpServer("ping", changeValue.replyTo);
     }
     return this;
   }
@@ -66,21 +68,23 @@ public class EntityActor extends AbstractBehavior<EntityActor.Command> {
     if (state == null) {
       getValue.replyTo.tell(new GetValueAckNotFound(getValue.id));
       state = new State(getValue.id, new Value(""));
-      notifyHttpServer("start");
+      notifyHttpServer("start", getValue.replyTo);
     } else {
       getValue.replyTo.tell(new GetValueAck(state.id, state.value));
+      notifyHttpServer("ping", getValue.replyTo);
     }
     return this;
   }
 
   private Behavior<Command> onPassivate() {
-    log().info("Stop {}", entityId);
-    notifyHttpServer("stop");
+    log().info("Stop passivate {} {} {}", entityId, shardId, memberId);
+    notifyHttpServer("stop", null);
     return Behaviors.stopped();
   }
 
-  private void notifyHttpServer(String action) {
-    final EntityAction entityAction = new EntityAction(memberId, shardId, entityId, action);
+  private void notifyHttpServer(String action, ActorRef<Command> sender) {
+    final String address = sender == null ? null : sender.path().address().toString();
+    final EntityAction entityAction = new EntityAction(memberId, shardId, entityId, action, address);
     final BroadcastEntityAction broadcastEntityAction = new BroadcastEntityAction(entityAction);
     httpServerActorRef.tell(broadcastEntityAction);
   }

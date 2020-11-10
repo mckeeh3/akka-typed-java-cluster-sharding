@@ -1,5 +1,36 @@
 package cluster;
 
+import static akka.http.javadsl.server.Directives.complete;
+import static akka.http.javadsl.server.Directives.concat;
+import static akka.http.javadsl.server.Directives.get;
+import static akka.http.javadsl.server.Directives.getFromResource;
+import static akka.http.javadsl.server.Directives.handleWebSocketMessages;
+import static akka.http.javadsl.server.Directives.path;
+import static akka.http.javadsl.server.Directives.respondWithHeader;
+
+import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.Queue;
+import java.util.Set;
+import java.util.function.Consumer;
+import java.util.stream.Collectors;
+import java.util.stream.StreamSupport;
+
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.ObjectWriter;
+
+import org.slf4j.Logger;
+
 import akka.NotUsed;
 import akka.actor.typed.ActorSystem;
 import akka.cluster.ClusterEvent;
@@ -16,27 +47,15 @@ import akka.http.javadsl.model.ws.TextMessage;
 import akka.http.javadsl.server.Route;
 import akka.japi.JavaPartialFunction;
 import akka.stream.javadsl.Flow;
-
-import com.fasterxml.jackson.annotation.JsonCreator;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.ObjectWriter;
-import org.slf4j.Logger;
+import cluster.HttpServer.ServerActivitySummary.ServerActivity;
 import scala.Option;
-
-import java.io.Serializable;
-import java.util.*;
-import java.util.function.Consumer;
-import java.util.stream.Collectors;
-import java.util.stream.StreamSupport;
-
-import static akka.http.javadsl.server.Directives.*;
 
 class HttpServer {
   private final ActorSystem<?> actorSystem;
   private ClusterAwareStatistics clusterAwareStatistics;
   private SingletonAwareStatistics singletonAwareStatistics;
   private final Tree tree = new Tree("cluster", "cluster");
+  private final ActivitySummary activitySummary = new ActivitySummary();
 
   static HttpServer start(ActorSystem<?> actorSystem) {
     final int port = memberPort(Cluster.get(actorSystem).selfMember());
@@ -106,7 +125,7 @@ class HttpServer {
     if (messageText.startsWith("akka://")) {
       handleStopNode(messageText);
     }
-    return getTreeAsJson();
+    return responseAsJson();
   }
 
   private void handleStopNode(String memberAddress) {
@@ -119,9 +138,10 @@ class HttpServer {
     });
   }
 
-  private Message getTreeAsJson() {
+  private Message responseAsJson() {
     tree.setMemberType(Cluster.get(actorSystem).selfMember().address().toString(), "httpServer");
-    return TextMessage.create(tree.toJson());
+    final ClientResponse clientResponse = new ClientResponse(tree, activitySummary);
+    return TextMessage.create(clientResponse.toJson());
   }
 
   private static Nodes loadNodes(ActorSystem<?> actorSystem, ClusterAwareStatistics clusterAwareStatistics, SingletonAwareStatistics singletonAwareStatistics) {
@@ -231,11 +251,18 @@ class HttpServer {
     }
   }
 
-  void load(EntityAction action) {
-    if ("start".equals(action.action)) {
-      tree.add(action.member, action.shardId, action.entityId);
-    } else if ("stop".equals(action.action)) {
-      tree.remove(action.member, action.shardId, action.entityId);
+  void load(EntityAction entityAction) {
+    switch (entityAction.action) {
+      case "start":
+        tree.add(entityAction.member, entityAction.shardId, entityAction.entityId);
+        activitySummary.load(entityAction);
+        break;
+      case "ping":
+        activitySummary.load(entityAction);
+        break;
+      case "stop":
+        tree.remove(entityAction.member, entityAction.shardId, entityAction.entityId);
+        break;
     }
   }
 
@@ -244,18 +271,20 @@ class HttpServer {
     final String shardId;
     final String entityId;
     final String action;
+    final String httpServer;
 
     @JsonCreator
-    EntityAction(String member, String shardId, String entityId, String action) {
+    EntityAction(String member, String shardId, String entityId, String action, String httpServer) {
       this.member = member;
       this.shardId = shardId;
       this.entityId = entityId;
       this.action = action;
+      this.httpServer = httpServer;
     }
 
     @Override
     public String toString() {
-      return String.format("%s[%s, %s, %s, %s]", getClass().getSimpleName(), member, shardId, entityId, action);
+      return String.format("%s[%s, %s, %s, %s, %s]", getClass().getSimpleName(), member, shardId, entityId, action, httpServer);
     }
   }
 
@@ -534,6 +563,118 @@ class HttpServer {
         type,
         events
       );
+    }
+  }
+
+  public static class ActivitySummary implements Serializable {
+    private static final long serialVersionUID = 1L;
+    public final ServerActivitySummary serverActivitySummary = new ServerActivitySummary();
+
+    void load(EntityAction entityAction) {
+      serverActivitySummary.load(entityAction);
+    }
+
+    @Override
+    public String toString() {
+      return String.format("%s[%s]", getClass().getSimpleName(), serverActivitySummary.serverActivities.values());
+    }
+  }
+
+  public static class ServerActivitySummary implements Serializable {
+    private static final long serialVersionUID = 1L;
+    public final Map<String, ServerActivity> serverActivities = new HashMap<>();
+
+    void load(EntityAction entityAction) {
+      final String server = entityAction.httpServer;
+      serverActivities.put(server, serverActivities.getOrDefault(server, new ServerActivity(server)).load(entityAction));
+    }
+
+    @Override
+    public String toString() {
+      return String.format("%s[%s]", getClass().getSimpleName(), serverActivities);
+    }
+
+    public static class ServerActivity implements Serializable {
+      private static final long serialVersionUID = 1L;
+      public final String server;
+      public int messageCount;
+      public Queue<Link> links = new LinkedList<>();
+
+      public ServerActivity(String server) {
+        this.server = server;
+        messageCount = 0;
+      }
+
+      ServerActivity load(EntityAction entityAction) {
+        messageCount++;
+
+        links.offer(new Link(entityAction.entityId, entityAction.httpServer));
+        while (links.size() > 50) {
+          links.poll();
+        }
+        return this;
+      }
+
+      @Override
+      public int hashCode() {
+        final int prime = 31;
+        int result = 1;
+        result = prime * result + ((server == null) ? 0 : server.hashCode());
+        return result;
+      }
+
+      @Override
+      public boolean equals(Object obj) {
+        if (this == obj) return true;
+        if (obj == null) return false;
+        if (getClass() != obj.getClass()) return false;
+        ServerActivity other = (ServerActivity) obj;
+        if (server == null) {
+          if (other.server != null) return false;
+        } else if (!server.equals(other.server)) return false;
+        return true;
+      }
+
+      @Override
+      public String toString() {
+        return String.format("%s[%s, %,d]", getClass().getSimpleName(), server, messageCount);
+      }
+    }
+  }
+
+  public static class Link implements Serializable {
+    private static final long serialVersionUID = 1L;
+    public final String entityId;
+    public final String server;
+
+    public Link(String entityId, String server) {
+      this.entityId = entityId;
+      this.server = server;
+    }
+
+    @Override
+    public String toString() {
+      return String.format("%s[%s, %s]", getClass().getSimpleName(), entityId, server);
+    }
+  }
+
+  public static class ClientResponse implements Serializable {
+    private static final long serialVersionUID = 1L;
+    public final Tree tree;
+    public final Collection<ServerActivity> serverActivities;
+
+    public ClientResponse(Tree tree, ActivitySummary activitySummary) {
+      this.tree = tree;
+      serverActivities = activitySummary.serverActivitySummary.serverActivities.values();
+    }
+
+    String toJson() {
+      ObjectWriter ow = new ObjectMapper().writer().withDefaultPrettyPrinter();
+      try {
+        return ow.writeValueAsString(this);
+      } catch (JsonProcessingException e) {
+        return String.format("{ \"error\" : \"%s\" }", e.getMessage());
+      }
     }
   }
 }
