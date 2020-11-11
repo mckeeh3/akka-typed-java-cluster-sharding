@@ -76,8 +76,7 @@ class HttpServerActor {
   }
 
   private static void receptionistRegisterSubscribe(ActorContext<HttpServer.Statistics> actorContext) {
-    final ActorRef<Receptionist.Listing> listingActorRef = actorContext.messageAdapter(Receptionist.Listing.class,
-        Listeners::new);
+    final var listingActorRef = actorContext.messageAdapter(Receptionist.Listing.class, Listeners::new);
 
     actorContext.getSystem().receptionist().tell(Receptionist.register(serviceKey, actorContext.getSelf()));
     actorContext.getSystem().receptionist().tell(Receptionist.subscribe(serviceKey, listingActorRef));

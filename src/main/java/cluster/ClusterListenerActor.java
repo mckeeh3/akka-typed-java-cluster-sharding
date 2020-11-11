@@ -59,7 +59,7 @@ class ClusterListenerActor extends AbstractBehavior<ClusterEvent.ClusterDomainEv
   }
 
   private void logClusterMembers() {
-    final Nodes nodesNow = Nodes.init(cluster);
+    final var nodesNow = Nodes.init(cluster);
     if (!nodesNow.equals(nodesThen)) {
       nodesNow.nodes.forEach(new Consumer<Node>() {
         int m = 0;
@@ -104,32 +104,23 @@ class ClusterListenerActor extends AbstractBehavior<ClusterEvent.ClusterDomainEv
 
     @Override
     public boolean equals(Object obj) {
-      if (this == obj)
-        return true;
-      if (obj == null)
-        return false;
-      if (getClass() != obj.getClass())
-        return false;
+      if (this == obj) return true;
+      if (obj == null) return false;
+      if (getClass() != obj.getClass()) return false;
       Node other = (Node) obj;
-      if (leader != other.leader)
-        return false;
+      if (leader != other.leader) return false;
       if (memberStatus == null) {
-        if (other.memberStatus != null)
-          return false;
-      } else if (!memberStatus.equals(other.memberStatus))
-        return false;
-      if (oldest != other.oldest)
-        return false;
-      if (port != other.port)
-        return false;
-      if (unreachable != other.unreachable)
-        return false;
+        if (other.memberStatus != null) return false;
+      } else if (!memberStatus.equals(other.memberStatus)) return false;
+      if (oldest != other.oldest) return false;
+      if (port != other.port) return false;
+      if (unreachable != other.unreachable) return false;
       return true;
     }
 
     @Override
     public String toString() {
-      String msg = (leader ? ", (LEADER)" : "") + (oldest ? ", (OLDEST)" : "") + (unreachable ? ", (UNREACHABLE)" : "");
+      final var msg = (leader ? ", (LEADER)" : "") + (oldest ? ", (OLDEST)" : "") + (unreachable ? ", (UNREACHABLE)" : "");
       return String.format("%s[%s, %s%s]", getClass().getSimpleName(), member.address(), memberStatus, msg);
     }
   }
@@ -142,14 +133,14 @@ class ClusterListenerActor extends AbstractBehavior<ClusterEvent.ClusterDomainEv
     }
 
     static Nodes init(Cluster cluster) {
-      final ClusterEvent.CurrentClusterState clusterState = cluster.state();
-      final Set<Member> unreachable = clusterState.getUnreachable();
-      final Optional<Member> old = StreamSupport.stream(clusterState.getMembers().spliterator(), false)
+      final var clusterState = cluster.state();
+      final var unreachable = clusterState.getUnreachable();
+      final var old = StreamSupport.stream(clusterState.getMembers().spliterator(), false)
           .filter(member -> member.status().equals(MemberStatus.up()))
           .filter(member -> !(unreachable.contains(member)))
           .reduce((older, member) -> older.isOlderThan(member) ? older : member);
-      final Member oldest = old.orElse(cluster.selfMember());
-      final List<Node> nodes = new ArrayList<>();
+      final var oldest = old.orElse(cluster.selfMember());
+      final var nodes = new ArrayList<Node>();
 
       StreamSupport.stream(clusterState.getMembers().spliterator(), false)
           .forEach(new Consumer<Member>() {
@@ -184,18 +175,13 @@ class ClusterListenerActor extends AbstractBehavior<ClusterEvent.ClusterDomainEv
 
     @Override
     public boolean equals(Object obj) {
-      if (this == obj)
-        return true;
-      if (obj == null)
-        return false;
-      if (getClass() != obj.getClass())
-        return false;
+      if (this == obj) return true;
+      if (obj == null) return false;
+      if (getClass() != obj.getClass()) return false;
       Nodes other = (Nodes) obj;
       if (nodes == null) {
-        if (other.nodes != null)
-          return false;
-      } else if (!nodes.equals(other.nodes))
-        return false;
+        if (other.nodes != null) return false;
+      } else if (!nodes.equals(other.nodes)) return false;
       return true;
     }
 

@@ -17,9 +17,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.Optional;
 import java.util.Queue;
-import java.util.Set;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
@@ -33,7 +31,6 @@ import org.slf4j.Logger;
 
 import akka.NotUsed;
 import akka.actor.typed.ActorSystem;
-import akka.cluster.ClusterEvent;
 import akka.cluster.Member;
 import akka.cluster.MemberStatus;
 import akka.cluster.typed.Cluster;
@@ -48,7 +45,6 @@ import akka.http.javadsl.server.Route;
 import akka.japi.JavaPartialFunction;
 import akka.stream.javadsl.Flow;
 import cluster.HttpServer.ServerActivitySummary.ServerActivity;
-import scala.Option;
 
 class HttpServer {
   private final ActorSystem<?> actorSystem;
@@ -121,7 +117,7 @@ class HttpServer {
   }
 
   private Message handleClientMessage(Message message) {
-    String messageText = message.asTextMessage().getStrictText();
+    final var messageText = message.asTextMessage().getStrictText();
     if (messageText.startsWith("akka://")) {
       handleStopNode(messageText);
     }
@@ -130,7 +126,7 @@ class HttpServer {
 
   private void handleStopNode(String memberAddress) {
     log().info("Stop node {}", memberAddress);
-    final Cluster cluster = Cluster.get(actorSystem);
+    final var cluster = Cluster.get(actorSystem);
     cluster.state().getMembers().forEach(member -> {
       if (memberAddress.equals(member.address().toString())) {
         cluster.manager().tell(Leave.create(member.address()));
@@ -140,24 +136,24 @@ class HttpServer {
 
   private Message responseAsJson() {
     tree.setMemberType(Cluster.get(actorSystem).selfMember().address().toString(), "httpServer");
-    final ClientResponse clientResponse = new ClientResponse(tree, activitySummary);
+    final var clientResponse = new ClientResponse(tree, activitySummary);
     return TextMessage.create(clientResponse.toJson());
   }
 
   private static Nodes loadNodes(ActorSystem<?> actorSystem, ClusterAwareStatistics clusterAwareStatistics, SingletonAwareStatistics singletonAwareStatistics) {
-    final Cluster cluster = Cluster.get(actorSystem);
-    final ClusterEvent.CurrentClusterState clusterState = cluster.state();
+    final var cluster = Cluster.get(actorSystem);
+    final var clusterState = cluster.state();
 
-    final Set<Member> unreachable = clusterState.getUnreachable();
+    final var unreachable = clusterState.getUnreachable();
 
-    final Optional<Member> old = StreamSupport.stream(clusterState.getMembers().spliterator(), false)
+    final var old = StreamSupport.stream(clusterState.getMembers().spliterator(), false)
         .filter(member -> member.status().equals(MemberStatus.up()))
         .filter(member -> !(unreachable.contains(member)))
         .reduce((older, member) -> older.isOlderThan(member) ? older : member);
 
-    final Member oldest = old.orElse(cluster.selfMember());
+    final var oldest = old.orElse(cluster.selfMember());
 
-    final List<Integer> seedNodePorts = seedNodePorts(actorSystem);
+    final var seedNodePorts = seedNodePorts(actorSystem);
 
     final Nodes nodes = new Nodes(
         memberPort(cluster.selfMember()),
@@ -198,13 +194,13 @@ class HttpServer {
   }
 
   private static int memberPort(Member member) {
-    final Option<Object> portOption = member.address().port();
+    final var portOption = member.address().port();
     return portOption.isDefined() ? Integer.parseInt(portOption.get().toString()) : 0;
   }
 
   private static List<Integer> seedNodePorts(ActorSystem<?> actorSystem) {
     return actorSystem.settings().config().getList("akka.cluster.seed-nodes").stream().map(s -> s.unwrapped().toString()).map(s -> {
-          final String[] split = s.split(":");
+          final var split = s.split(":");
           return split.length == 0 ? 0 : Integer.parseInt(split[split.length - 1]);
         }).collect(Collectors.toList());
   }
@@ -305,14 +301,14 @@ class HttpServer {
     }
 
     void add(Member member, boolean leader, boolean oldest, boolean seedNode) {
-      final int port = memberPort(member);
+      final var port = memberPort(member);
       if (isValidPort(port)) {
         nodes.add(new Node(port, state(member.status()), memberStatus(member.status()), leader, oldest, seedNode));
       }
     }
 
     void addUnreachable(Member member) {
-      final int port = memberPort(member);
+      final var port = memberPort(member);
       if (isValidPort(port)) {
         Node node = new Node(port, "unreachable", "unreachable", false, false, false);
         nodes.remove(node);
@@ -361,7 +357,7 @@ class HttpServer {
     }
 
     String toJson() {
-      final ObjectWriter ow = new ObjectMapper().writer().withDefaultPrettyPrinter();
+      final var ow = new ObjectMapper().writer().withDefaultPrettyPrinter();
       try {
         return ow.writeValueAsString(this);
       } catch (JsonProcessingException e) {
@@ -424,17 +420,17 @@ class HttpServer {
 
     void add(String memberId, String shardId, String entityId) {
       removeEntity(entityId);
-      Tree member = find(memberId, "member");
+      var member = find(memberId, "member");
       if (member == null) {
         member = Tree.create(memberId, "member");
         children.add(member);
       }
-      Tree shard = member.find(shardId, "shard");
+      var shard = member.find(shardId, "shard");
       if (shard == null) {
         shard = Tree.create(shardId, "shard");
         member.children.add(shard);
       }
-      Tree entity = shard.find(entityId, "entity");
+      var entity = shard.find(entityId, "entity");
       if (entity == null) {
         entity = Tree.create(entityId, "entity");
         shard.children.add(entity);
@@ -442,11 +438,11 @@ class HttpServer {
     }
 
     void remove(String memberId, String shardId, String entityId) {
-      Tree member = find(memberId, "member");
+      var member = find(memberId, "member");
       if (member != null) {
-        Tree shard = member.find(shardId, "shard");
+        var shard = member.find(shardId, "shard");
         if (shard != null) {
-          Tree entity = shard.find(entityId, "entity");
+          var entity = shard.find(entityId, "entity");
           shard.children.remove(entity);
 
           if (shard.children.isEmpty()) {
@@ -460,9 +456,9 @@ class HttpServer {
     }
 
     void removeEntity(String entityId) {
-      for (Tree member : children) {
-        for (Tree shard : member.children) {
-          for (Tree entity : shard.children) {
+      for (var member : children) {
+        for (var shard : member.children) {
+          for (var entity : shard.children) {
             if (entity.name.equals(entityId)) {
               shard.children.remove(entity);
               break;
@@ -473,18 +469,18 @@ class HttpServer {
     }
 
     void incrementEvents(String memberId, String shardId, String entityId) {
-      Tree entity = find(memberId, shardId, entityId);
+      final var entity = find(memberId, shardId, entityId);
       if (entity != null) {
         entity.events += 1;
       }
     }
 
     private Tree find(String memberId, String shardId, String entityId) {
-      Tree member = find(memberId, "member");
+      final var member = find(memberId, "member");
       if (member != null) {
-        Tree shard = member.find(shardId, "shard");
+        final var shard = member.find(shardId, "shard");
         if (shard != null) {
-          Tree entity = shard.find(entityId, "entity");
+          final var entity = shard.find(entityId, "entity");
           if (entity != null) {
             return entity;
           }
@@ -497,8 +493,8 @@ class HttpServer {
       if (this.name.equals(name) && this.type.contains(type)) {
         return this;
       } else {
-        for (Tree child : children) {
-          Tree found = child.find(name, type);
+        for (var child : children) {
+          final var found = child.find(name, type);
           if (found != null) {
             return found;
           }
@@ -522,7 +518,7 @@ class HttpServer {
     }
 
     void unsetMemberType(String memberId, String type) {
-      Tree member = find(memberId, type);
+      final var member = find(memberId, type);
       if (member != null) {
         member.type = member.type.replaceAll(type, "");
         member.type = member.type.replaceAll(" +", " ");
@@ -546,7 +542,7 @@ class HttpServer {
     }
 
     String toJson() {
-      ObjectWriter ow = new ObjectMapper().writer().withDefaultPrettyPrinter();
+      final var ow = new ObjectMapper().writer().withDefaultPrettyPrinter();
       try {
         return ow.writeValueAsString(this);
       } catch (JsonProcessingException e) {
@@ -556,13 +552,7 @@ class HttpServer {
 
     @Override
     public String toString() {
-      return String.format(
-        "%s[%s, %s, %d]",
-        getClass().getSimpleName(),
-        name,
-        type,
-        events
-      );
+      return String.format("%s[%s, %s, %d]", getClass().getSimpleName(), name, type, events);
     }
   }
 

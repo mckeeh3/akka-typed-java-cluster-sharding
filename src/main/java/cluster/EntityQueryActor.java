@@ -11,7 +11,6 @@ import akka.actor.typed.javadsl.Behaviors;
 import akka.actor.typed.javadsl.Receive;
 import akka.actor.typed.javadsl.TimerScheduler;
 import akka.cluster.sharding.typed.javadsl.ClusterSharding;
-import akka.cluster.sharding.typed.javadsl.EntityRef;
 import cluster.EntityActor.Command;
 
 class EntityQueryActor extends AbstractBehavior<EntityActor.Command> {
@@ -31,7 +30,7 @@ class EntityQueryActor extends AbstractBehavior<EntityActor.Command> {
     clusterSharding = ClusterSharding.get(actorContext.getSystem());
 
     entitiesPerNode = actorContext.getSystem().settings().config().getInt("entity-actor.entities-per-node");
-    final Duration interval = Duration.parse(actorContext.getSystem().settings().config().getString("entity-actor.query-tick-interval-iso-8601"));
+    final var interval = Duration.parse(actorContext.getSystem().settings().config().getString("entity-actor.query-tick-interval-iso-8601"));
     timerScheduler.startTimerWithFixedDelay(Tick.ticktock, interval);
     nodePort = actorContext.getSystem().address().getPort().orElse(-1);
   }
@@ -46,9 +45,9 @@ class EntityQueryActor extends AbstractBehavior<EntityActor.Command> {
   }
 
   private Behavior<EntityActor.Command> onTick() {
-    final String entityId = EntityActor.entityId(nodePort, (int) Math.round(Math.random() * entitiesPerNode));
-    final EntityActor.Id id = new EntityActor.Id(entityId);
-    final EntityRef<Command> entityRef = clusterSharding.entityRefFor(EntityActor.entityTypeKey, entityId);
+    final var entityId = EntityActor.entityId(nodePort, (int) Math.round(Math.random() * entitiesPerNode));
+    final var id = new EntityActor.Id(entityId);
+    final var entityRef = clusterSharding.entityRefFor(EntityActor.entityTypeKey, entityId);
     entityRef.tell(new EntityActor.GetValue(id, actorContext.getSelf()));
     return this;
   }

@@ -31,7 +31,9 @@ class ClusterSingletonActor extends AbstractBehavior<Message> {
 
   @Override
   public Receive<Message> createReceive() {
-    return newReceiveBuilder().onMessage(ClusterSingletonAwareActor.Ping.class, this::onPing).build();
+    return newReceiveBuilder()
+      .onMessage(ClusterSingletonAwareActor.Ping.class, this::onPing)
+      .build();
   }
 
   private Behavior<Message> onPing(ClusterSingletonAwareActor.Ping ping) {

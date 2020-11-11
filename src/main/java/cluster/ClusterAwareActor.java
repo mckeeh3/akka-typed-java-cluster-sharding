@@ -11,7 +11,6 @@ import akka.cluster.MemberStatus;
 import akka.cluster.typed.Cluster;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import org.slf4j.Logger;
-import scala.Option;
 
 import java.time.Duration;
 import java.time.Instant;
@@ -53,7 +52,7 @@ public class ClusterAwareActor extends AbstractBehavior<ClusterAwareActor.Messag
   }
 
   private void receptionistRegisterSubscribe(ActorContext<Message> context) {
-    final ActorRef<Receptionist.Listing> listingActorRef = context.messageAdapter(Receptionist.Listing.class, Listeners::new);
+    final var listingActorRef = context.messageAdapter(Receptionist.Listing.class, Listeners::new);
 
     context.getSystem().receptionist()
         .tell(Receptionist.register(serviceKey, context.getSelf()));
@@ -105,13 +104,13 @@ public class ClusterAwareActor extends AbstractBehavior<ClusterAwareActor.Messag
   }
 
   private void pingUpColleagues() {
-    final ActorContext<Message> context = getContext();
+    final var context = getContext();
 
     if (iAmUp()) {
-      final int size = serviceInstances.size() - 1;
+      final var size = serviceInstances.size() - 1;
       logInfoIf(pingStatistics.totalPings % 100 == 0, "Tick, ping {}", Math.max(size, 0));
 
-      final List<Address> upMembers = getUpMembers();
+      final var upMembers = getUpMembers();
 
       serviceInstances.stream()
           .filter(clusterAwareActorRef -> !clusterAwareActorRef.equals(context.getSelf()))
@@ -127,7 +126,7 @@ public class ClusterAwareActor extends AbstractBehavior<ClusterAwareActor.Messag
   }
 
   private List<Address> getUpMembers() {
-    final Iterable<Member> members = Cluster.get(getContext().getSystem()).state().getMembers();
+    final var members = Cluster.get(getContext().getSystem()).state().getMembers();
     return StreamSupport.stream(members.spliterator(), false)
         .filter(member -> MemberStatus.up().equals(member.status()))
         .map(Member::address)
@@ -212,7 +211,7 @@ public class ClusterAwareActor extends AbstractBehavior<ClusterAwareActor.Messag
     }
 
     void clearOfflineNodeCounters(Set<ActorRef<Message>> serviceInstances) {
-      final List<Integer> ports = new ArrayList<>();
+      final var ports = new ArrayList<Integer>();
       IntStream.rangeClosed(2551, 2559).forEach(ports::add);
 
       serviceInstances.forEach(actorRef -> ports.removeIf(p -> p == actorRefPort(actorRef)));
@@ -220,7 +219,7 @@ public class ClusterAwareActor extends AbstractBehavior<ClusterAwareActor.Messag
     }
 
     private static int actorRefPort(ActorRef<Message> actorRef) {
-      final Option<Object> port = actorRef.path().address().port();
+      final var port = actorRef.path().address().port();
       return port.isDefined()
           ? Integer.parseInt(port.get().toString())
           : -1;

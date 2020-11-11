@@ -60,16 +60,16 @@ const g = svg.append('g')
 const gMembers = g.append('g')
   .attr('class', 'members')
 
-const gHttpServerLink = g.append('g')
-  .attr('class', 'http-server-link')
-  .attr('stroke-opacity', '0.4');
-
 const gLink = g.append('g')
   .attr('class', 'links')
   .attr('fill', 'none')
   .attr('stroke', '#555')
   .attr('stroke-opacity', '0.4')
   .attr('stroke-width', 1.5);
+
+const gHttpServerLink = g.append('g')
+  .attr('class', 'http-server-link')
+  .attr('stroke-opacity', '0.4');
 
 const gNode = g.append('g')
   .attr('class', 'nodes')

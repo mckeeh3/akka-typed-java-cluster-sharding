@@ -1,18 +1,23 @@
 package cluster;
 
-import akka.actor.Address;
+import java.time.Duration;
+import java.util.Map;
+
+import com.fasterxml.jackson.annotation.JsonCreator;
+
+import org.slf4j.Logger;
+
 import akka.actor.typed.ActorRef;
 import akka.actor.typed.Behavior;
-import akka.actor.typed.javadsl.*;
+import akka.actor.typed.javadsl.AbstractBehavior;
+import akka.actor.typed.javadsl.ActorContext;
+import akka.actor.typed.javadsl.Behaviors;
+import akka.actor.typed.javadsl.Receive;
+import akka.actor.typed.javadsl.TimerScheduler;
 import akka.cluster.Cluster;
 import akka.cluster.MemberStatus;
 import akka.cluster.typed.ClusterSingleton;
 import akka.cluster.typed.SingletonActor;
-import com.fasterxml.jackson.annotation.JsonCreator;
-import org.slf4j.Logger;
-
-import java.time.Duration;
-import java.util.Map;
 
 class ClusterSingletonAwareActor extends AbstractBehavior<ClusterSingletonAwareActor.Message> {
   private final ActorRef<Message> clusterSingletonProxy;
@@ -28,7 +33,7 @@ class ClusterSingletonAwareActor extends AbstractBehavior<ClusterSingletonAwareA
   ClusterSingletonAwareActor(ActorContext<Message> actorContext, TimerScheduler<Message> timers, ActorRef<HttpServer.Statistics> httpServerActor) {
     super(actorContext);
     this.httpServerActor = httpServerActor;
-    final Address selfAddress = Cluster.get(actorContext.getSystem()).selfAddress();
+    final var selfAddress = Cluster.get(actorContext.getSystem()).selfAddress();
     port = selfAddress.getPort().orElse(-1);
 
     clusterSingletonProxy = ClusterSingleton.get(actorContext.getSystem())
@@ -63,8 +68,7 @@ class ClusterSingletonAwareActor extends AbstractBehavior<ClusterSingletonAwareA
     return Cluster.get(getContext().getSystem()).selfMember().status().equals(MemberStatus.up());
   }
 
-  interface Message extends CborSerializable {
-  }
+  interface Message extends CborSerializable { }
 
   public static class Ping implements Message {
     public final ActorRef<Message> replyTo;

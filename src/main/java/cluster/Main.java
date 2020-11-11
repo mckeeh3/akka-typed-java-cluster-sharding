@@ -29,7 +29,7 @@ class Main {
   private static void bootstrap(final ActorContext<Void> context) {
     context.spawn(ClusterListenerActor.create(), "clusterListener");
 
-    final ActorRef<HttpServer.Statistics> httpServerActorRef = context.spawn(HttpServerActor.create(), HttpServerActor.class.getSimpleName());
+    final var httpServerActorRef = context.spawn(HttpServerActor.create(), HttpServerActor.class.getSimpleName());
 
     context.spawn(ClusterAwareActor.create(httpServerActorRef), ClusterAwareActor.class.getSimpleName());
     context.spawn(ClusterSingletonAwareActor.create(httpServerActorRef), ClusterSingletonAwareActor.class.getSimpleName());
@@ -43,18 +43,18 @@ class Main {
     if (args.length == 0) {
       throw new RuntimeException("Akka node port is required.");
     }
-    final String port = Arrays.asList(args).get(0);
-    final ActorSystem<?> actorSystem = ActorSystem.create(Main.create(), "cluster", setupClusterNodeConfig(port));
+    final var port = Arrays.asList(args).get(0);
+    final var actorSystem = ActorSystem.create(Main.create(), "cluster", setupClusterNodeConfig(port));
     AkkaManagement.get(actorSystem).start();
   }
 
   private static Config setupClusterNodeConfig(String port) {
-    final Config config = ConfigFactory.load();
-    final boolean useLocalhost2 = config.getBoolean("useLocalhost2");
+    final var config = ConfigFactory.load();
+    final var useLocalhost2 = config.getBoolean("useLocalhost2");
 
-    final String localhost1 = "127.0.0.1";
-    final String localhost2 = "127.0.0.2";
-    final String hostname = useLocalhost2 && port.compareTo("2555") > 0 ? localhost2 : localhost1;
+    final var localhost1 = "127.0.0.1";
+    final var localhost2 = "127.0.0.2";
+    final var hostname = useLocalhost2 && port.compareTo("2555") > 0 ? localhost2 : localhost1;
     return ConfigFactory
         .parseString(String.format("akka.remote.artery.canonical.hostname = \"%s\"%n", hostname)
             + String.format("akka.remote.artery.canonical.port=%s%n", port)
@@ -66,7 +66,7 @@ class Main {
   }
 
   private static void startClusterSharding(final ActorSystem<?> actorSystem, ActorRef<HttpServer.Statistics> httpServerActorRef) {
-    final ClusterSharding clusterSharding = ClusterSharding.get(actorSystem);
+    final var clusterSharding = ClusterSharding.get(actorSystem);
     clusterSharding.init(
       Entity.of(
         EntityActor.entityTypeKey,
