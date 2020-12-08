@@ -43,7 +43,7 @@ section of the cluster sharding documentation.
 ![Visualization of cluster sharding](docs/images/Akka-Cluster-Sharding-Viewer-01.png)
 <p align="center">Figure 1, Visualization of cluster sharding</p>
 
-The visualization in Figure 1 shows an example of cluster sharding. The blue leaf circles represent the entity actors. Each entity actor represents the state of an entity. The green circles that connect to the entity circles represent the running shard actors. In the example system there 18 shards configured. The shards connect to the orange shard region actors. These orange circles also represent other actors, such as the entity command and query actors. Also, the orange circles represent the root of the actor system on each cluster node. The grid on the top left represents the state of each of the nine node in the cluster. Green tiles in the grid indicate running cluster nodes. Nodes that are down or have no running entity actors are gray.
+The visualization in Figure 1 shows an example of cluster sharding. The blue leaf circles represent the entity actors. Each entity actor represents the state of an entity. The green circles that connect to the entity circles represent the running shard actors. In the example system there 18 shards configured. The shards connect to the orange shard region actors. These orange circles also represent other actors, such as the entity command and query actors. Also, the orange circles represent the root of the actor system on each cluster node. The grid on the top left represents the state of each of the nine nodes in the cluster. Green tiles in the grid indicate running cluster nodes. Nodes that are down or have no running entity actors are gray.
 
 ### How it works
 
@@ -106,7 +106,7 @@ One thing to take note of is how this actor replies to the command message sende
       changeValue.replyTo.tell(new ChangeValueAck("update", changeValue.id, changeValue.value));
 ~~~
 
-On the first command received by a newly started entity actor, the `notifyHttpServer` method is also invoked. This method is used to send a message to the `HttpServerActor`. Each entity actor notifies the HTTP server actor when it starts and stops. These notifications are used to modify the cluster sharding state data that is rendered in the Cluster Sharding web viewer.
+As each incoming command is processed, the `notifyHttpServer` method is also invoked. This method is used to send a message to the `HttpServerActor`. Each entity actor notifies the HTTP server actor when each message is received. These notifications are used to modify the cluster sharding state data rendered in the Cluster Sharding web viewer.
 
 ~~~java
   private void notifyHttpServer(String action) {
@@ -326,13 +326,12 @@ Note that the above command opened the viewer using the HTTP server running on n
 
 ![Visualization of cluster sharding](docs/images/Akka-Cluster-Sharding-Viewer-01.png)
 <p align="center">Figure 2, Visualization of cluster sharding</p>
-->Figure 2, Visualization of cluster sharding<-
 
 The above image shows the viewer of an Akka Cluster running nine nodes. Note the colors of nodes 1 and 2. The purple color of node 1 indicates this is the oldest running node and the node where cluster singleton actors are currently running. The yellow color of node 2 shows that this is the node that the viewer web page is connected to from the browser.
 
-The reason for highlighting the oldest node is to show how cluster singleton actors move when the oldest node changes. The image below shows what happened when node 1 is stopped. In this case, when node 1 is stopped, node 3 becomes the oldest node. Note that the color of node 3 has changed.
+The reason for highlighting the oldest node is to show how cluster singleton actors move when the oldest node changes. The image below shows what happened when node 1 is stopped. In this case, when node 1 is stopped, node 6 becomes the oldest node. Note that the color of node 3 has changed.
 
-You can stop selected cluster nodes from the viewer's web page by either clicking one of the large node circles or be clicking nodes in the top left grid. In this example, node 1 was stopped by clicking node 1 in the grid.
+You can stop selected cluster nodes from the viewer's web page by clicking one of the nodes in the top left grid. In this example, node 1 was stopped by clicking node 1 in the grid.
 
 ![Cluster singleton moves to new oldest node](docs/images/Akka-Cluster-Sharding-Viewer-02.png)
 <p align="center">Figure 3, Cluster singleton moves to new oldest node</p>
@@ -344,7 +343,7 @@ Highlighting entity and shard actors allows you to watch how entity and shard ac
 ![Shard and entity actors restarted on new node](docs/images/Akka-Cluster-Sharding-Viewer-03.png)
 <p align="center">Figure 4, Shard and entity actors restarted on new node</p>
 
-In the above image, you can see that entity actor 2558-8 of shard 1 has "moved" to node 4. The actors are not actually moved. A new instance of each actor is started on the new nodes. Also, note that nodes 1 and 6 in the top-left grid are dark to indicate that they are no longer running.
+In the above image, you can see that entity actor 2558-8 of shard 1 has "moved" to node 7. The actors are not actually moved. A new instance of each actor is started on the new nodes. Also, note that nodes 1 and 3 in the top-left grid are dark to indicate that they are no longer running.
 
 ![Shard and entity actors after rebalancing](docs/images/Akka-Cluster-Sharding-Viewer-04.png)
 <p align="center">Figure 5, Shard and entity actors after rebalancing</p>
@@ -352,13 +351,25 @@ In the above image, you can see that entity actor 2558-8 of shard 1 has "moved" 
 Shards and their associated entity actors may be rebalanced When new nodes are added to the cluster. This rebalancing is done to more evenly distribute the workload across the cluster.
 
 ~~~bash
-$ ./akka node start 1 6
+$ ./akka node start 1 3
 Start node 1 on port 2551, management port 8551, HTTP port 9551
-Start node 6 on port 2556, management port 8556, HTTP port 9556
+Start node 3 on port 2553, management port 8553, HTTP port 9553
 ~~~
 
-In the above image, cluster nodes 1 and 6 have been restarted. Note that nodes 1 and 6 changed from a gray to green background color in the top-left grid. Once these new nodes have joined the cluster, Akka cluster sharding rebalanced some of the shards to nodes 1 and 6. In this example, shard 1 with the red highlighted entity actor 2558-8 was rebalanced to node 1.
+In the above image, cluster nodes 1 and 3 have been restarted. Note that nodes 1 and 3 changed from a gray to green background color in the top-left grid. Once these new nodes have joined the cluster, Akka cluster sharding rebalanced some of the shards to nodes 1 and 3. In this example, shard 1 with the red highlighted entity actor 2558-8 was rebalanced to node 1.
 
-In the sample scenario shown in the above images, we tracked entity actor `2558-8`. This entity actor instance started on node 6. When node 6 was stopped, the actor was restarted on node 4. Finally, when nodes 1 and 6 were restarted it triggered a shard rebalance that resulted in entity actor `2558-8`being restarted on node 1.
+In the sample scenario shown in the above images, we tracked entity actor `2558-8`. This entity actor instance started on node 6. When node 6 was stopped, the actor was restarted on node 4. Finally, when nodes 1 and 6 were restarted it triggered a shard rebalance that resulted in entity actor `2558-8`being restarted on node 3.
 
 The key point is that all of the recovery and rebalancing was handled by cluster sharding. This dynamic actor allocation is an example of [location transparency](https://doc.akka.io/docs/akka/current/general/remoting.html#location-transparency).
+
+There are a lot of lines drawn in the above images. Note, however, that there are fewer lines shown in Figure 4 than in Figure 5. You can hide some of the lines by clicking each of the large orange circles.
+
+![Message lines turned off](docs/images/Akka-Cluster-Sharding-Viewer-05.png)
+<p align="center">Figure 6, Message lines turned off</p>
+
+In Figure 6 shown above, each of the large circles has been clicked. The now hidden lines show entity command and query messages sent from the `EntityCommandActor` and the `EntityQueryActor`.
+
+![Message lines turned on node 8](docs/images/Akka-Cluster-Sharding-Viewer-06.png)
+<p align="center">Figure 6, Message lines turned on node 8</p>
+
+In Figure 6, node 8 was clicked to toggle the message lines on from that node. As you can see in this case, the lines from node 8 are linked to entity circles running on other nodes in the cluster. This is a visualization of [Location Transparency](https://doc.akka.io/docs/akka/current/general/remoting.html#location-transparency).
