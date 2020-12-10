@@ -72,7 +72,7 @@ class HttpServer {
 
   private void start(int port) {
     Http.get(actorSystem).newServerAt("localhost", port).bind(route());
-    log().info("HTTP Server started on port {}", "" + port);
+    log().info("HTTP Server started on port {}", port);
   }
 
   private Route route() {
@@ -258,6 +258,8 @@ class HttpServer {
         break;
       case "stop":
         tree.remove(entityAction.member, entityAction.shardId, entityAction.entityId);
+        break;
+      default:
         break;
     }
   }

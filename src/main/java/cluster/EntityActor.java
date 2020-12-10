@@ -82,16 +82,16 @@ public class EntityActor extends AbstractBehavior<EntityActor.Command> {
   }
 
   private void notifyHttpServer(String action, ActorRef<Command> sender) {
-    //final String address = sender.path().address().getHost().isPresent() ? sender.path().address().toString() : memberId;
-    //final String address = sender == null ? null : sender.path().address().toString();
-    final var address = sender == null 
-      ? null 
-      : sender.path().address().getHost().isPresent() 
-        ? sender.path().address().toString() 
-        : memberId;
+    final var address = sender == null ? null : addressFor(sender);
     final var entityAction = new EntityAction(memberId, shardId, entityId, action, address);
     final var broadcastEntityAction = new BroadcastEntityAction(entityAction);
     httpServerActorRef.tell(broadcastEntityAction);
+  }
+
+  private String addressFor(ActorRef<Command> sender) {
+    return sender.path().address().getHost().isPresent()
+      ? sender.path().address().toString()
+      : memberId;
   }
 
   private Logger log() {
@@ -101,7 +101,7 @@ public class EntityActor extends AbstractBehavior<EntityActor.Command> {
   static String entityId(int nodePort, int id) {
     return String.format("%d-%d", nodePort, id);
   }
-  
+
   public interface Command extends CborSerializable {}
 
   public static class ChangeValue implements Command {
