@@ -45,7 +45,7 @@ public class EntityActor extends AbstractBehavior<EntityActor.Command> {
       .onMessage(Passivate.class, msg -> onPassivate())
       .build();
   }
-  
+
   private Behavior<Command> onChangeValue(ChangeValue changeValue) {
     if (state == null) {
       state = new State(changeValue.id, changeValue.value);
