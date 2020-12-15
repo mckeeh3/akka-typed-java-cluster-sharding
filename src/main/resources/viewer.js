@@ -1,4 +1,5 @@
 var webSocket;
+var svgHasFocus = true;
 
 function sendWebSocketRequest(request) {
   if (webSocket && webSocket.readyState == WebSocket.OPEN) {
@@ -14,8 +15,10 @@ function sendWebSocketRequest(request) {
 
     webSocket.onmessage = function(event) {
       console.log(event);
-      root = JSON.parse(event.data);
-      update(root);
+      const root = JSON.parse(event.data);
+      if (svgHasFocus) {
+        update(root);
+      }
     }
 
     webSocket.onerror = function(error) {
@@ -112,8 +115,8 @@ function updateCropCircle(root) {
     .attr('class', d => 'link ' + d.source.data.type)
     .style('opacity', 0.000001)
     .attr('d', d3.linkRadial()
-                 .angle(d => d.x)
-                 .radius(d => d.y));
+                .angle(d => d.x)
+                .radius(d => d.y));
 
   link.transition(t2)
     .style('opacity', 1.0)
@@ -239,8 +242,8 @@ function updateCropCircle(root) {
 function updateClusterView(hierarchy) {
   const side = Math.min(width, height) / 20;
   const members = gMembers.selectAll('g')
-    .data(memberData(hierarchy));
-  
+    .data(memberData());
+
   const membersEnter = members.enter().append('g')
     .attr('cursor', 'pointer')
     .on('click', clickMember);
@@ -264,7 +267,7 @@ function updateClusterView(hierarchy) {
 
   members.select('text');
 
-  function memberData(hierarchy) {
+  function memberData() {
     const members = [];
     let memberId = 2551;
     for (var row = 0; row < 3; row++) {
@@ -310,20 +313,20 @@ function updateServerLinks(data, shardingLinks) {
     .data(links, d => d.source.id + '-' + d.target.id);
 
   const linkEnter = link.enter().append('path')
-    .attr('id', function (d) { 
-                       return d.source.id + '-' + d.target.id; })
+    .attr('id', function (d) {
+                      return d.source.id + '-' + d.target.id; })
     .attr('class', d => 'http-server http-server-id-' + d.source.id)
     .attr('stroke', d => d3.schemeSet3[Number(d.source.id) % d3.schemeSet3.length])
     .style('opacity', 0.000001)
     .attr('d', d3.linkRadial()
-                 .angle(d => d.x)
-                 .radius(d => d.y));
+                .angle(d => d.x)
+                .radius(d => d.y));
 
   link.transition(t2)
     .style('opacity', 1.0)
     .attr('d', d3.linkRadial()
-                 .angle(d => d.x)
-                 .radius(d => d.y));
+                .angle(d => d.x)
+                .radius(d => d.y));
 
   linkEnter.transition(t3)
     .style('opacity', 1.0);
@@ -352,8 +355,10 @@ function updateServerLinks(data, shardingLinks) {
       const entityLink = shardingLinks.find(l => l.target.data.name == entityId);
       if (entityLink) {
         const sourceId = server.split(':')[2];
-        links.push({ source: { id: sourceId, x: source.x, y: source.y }, 
-                     target: { id: entityId, x: entityLink.target.x, y: entityLink.target.y } });
+        links.push({
+          source: { id: sourceId, x: source.x, y: source.y },
+          target: { id: entityId, x: entityLink.target.x, y: entityLink.target.y }
+        });
       }
     });
     return links;
@@ -387,7 +392,7 @@ function updateStatistics(data, shardingDataLinks) {
 
   const nodes = gStatistics.selectAll('g')
     .data(labelsValues);
- 
+
   const nodesEnter = nodes.enter().append('g')
     .attr('cursor', 'pointer')
     .on('click', clickMember);
@@ -547,3 +552,14 @@ d3.select('body').on('keydown', function () {
     traceEntityIdNew = '';
   }
 });
+
+const svgElement = document.querySelector('svg');
+svgElement.onfocus = function () { svgFocus(true); };
+svgElement.onblur = function () { svgFocus(false); };
+svgElement.onmouseenter = function () { svgFocus(true); };
+svgElement.onmouseleave = function () { svgFocus(false); };
+
+function svgFocus(hasFocus) {
+  svgHasFocus = hasFocus;
+  console.log('SVG focus', svgHasFocus ? 'on' : 'off');
+}
