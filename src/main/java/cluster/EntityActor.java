@@ -14,7 +14,7 @@ import akka.cluster.sharding.typed.javadsl.EntityTypeKey;
 import cluster.HttpServer.EntityAction;
 import cluster.HttpServerActor.BroadcastEntityAction;
 
-public class EntityActor extends AbstractBehavior<EntityActor.Command> {
+class EntityActor extends AbstractBehavior<EntityActor.Command> {
   private final ActorContext<Command> actorContext;
   private final String entityId;
   private final String shardId;
