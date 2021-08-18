@@ -12,7 +12,6 @@ This project is one in a series of projects that starts with a simple Akka Clust
 The project series is composed of the following GitHub repos:
 
 * [akka-typed-java-cluster](https://github.com/mckeeh3/akka-typed-java-cluster)
-* [akka-typed-java-cluster-sbr](https://github.com/mckeeh3/akka-typed-java-cluster-sbr)
 * [akka-typed-java-cluster-aware](https://github.com/mckeeh3/akka-typed-java-cluster-aware)
 * [akka-typed-java-cluster-singleton](https://github.com/mckeeh3/akka-typed-java-cluster-singleton)
 * [akka-typed-java-cluster-sharding](https://github.com/mckeeh3/akka-typed-java-cluster-sharding)  (this project)
@@ -24,6 +23,14 @@ The project series is composed of the following GitHub repos:
 [Akka Projections](https://doc.akka.io/docs/akka-projection/current/)
 
 Each project can be cloned, built, and runs independently of the other projects.
+
+- [Akka Typed Java Cluster Sharding Example](#akka-typed-java-cluster-sharding-example)
+  - [About Akka Clustering Sharding](#about-akka-clustering-sharding)
+  - [How it works](#how-it-works)
+  - [Installation](#installation)
+  - [Run a cluster (Mac, Linux, Cygwin)](#run-a-cluster-mac-linux-cygwin)
+  - [The Cluster Dashboard](#the-cluster-dashboard)
+  - [The Cluster Sharding Viewer](#the-cluster-sharding-viewer)
 
 ## About Akka Clustering Sharding
 
@@ -41,11 +48,11 @@ The process of forwarding these messages to the right entities, which could be d
 section of the cluster sharding documentation.
 
 ![Visualization of cluster sharding](docs/images/Akka-Cluster-Sharding-Viewer-01.png)
-<p align="center">Figure 1, Visualization of cluster sharding</p>
+->Figure 1, Visualization of cluster sharding<-
 
 The visualization in Figure 1 shows an example of cluster sharding. The blue leaf circles represent the entity actors. Each entity actor represents the state of an entity. The green circles that connect to the entity circles represent the running shard actors. In the example system there 18 shards configured. The shards connect to the orange shard region actors. These orange circles also represent other actors, such as the entity command and query actors. Also, the orange circles represent the root of the actor system on each cluster node. The grid on the top left represents the state of each of the nine nodes in the cluster. Green tiles in the grid indicate running cluster nodes. Nodes that are down or have no running entity actors are gray.
 
-### How it works
+## How it works
 
 Cluster sharding is started in the `Main` class. The `startClusterSharding` method contains the code for initializing cluster sharding for the demo entity actor. See the 
 [Cluster Sharding](https://doc.akka.io/docs/akka/current/typed/cluster-sharding.html#cluster-sharding) documentation for a description of how this works.
@@ -157,7 +164,7 @@ Messages are sent to entity actors from two other actors, `EntityCommandActor` a
 
 These messages are sent via the onTick method. Note the process used to send these messages to the entity actors. The actual location of the entity actors is handled by cluster sharding. The sending actors send messages to cluster sharding, and it routes the messages to the targeted entity actor.
 
-### Installation
+## Installation
 
 ~~~bash
 git clone https://github.com/mckeeh3/akka-typed-java-cluster-sharding.git
@@ -167,7 +174,7 @@ mvn clean package
 
 The Maven command builds the project and creates a self contained runnable JAR.
 
-### Run a cluster (Mac, Linux, Cygwin)
+## Run a cluster (Mac, Linux, Cygwin)
 
 The project contains a set of scripts that can be used to start and stop individual cluster nodes or start and stop a cluster of nodes.
 
@@ -294,11 +301,11 @@ The `./akka cluster status` command displays the status of a currently running c
 extension
 [Cluster Http Management](https://developer.lightbend.com/docs/akka-management/current/cluster-http-management.html).
 
-### The Cluster Dashboard
+## The Cluster Dashboard
 
 Please see [The Cluster Dashboard](https://github.com/mckeeh3/akka-typed-java-cluster-singleton#the-cluster-dashboard) in the Cluster Singleton project. This project starts with the previous Akka Cluster Singleton project than adding an Akka Cluster Sharding example. Therefore all of the documentation of the last project also applies to this project.
 
-### The Cluster Sharding Viewer
+## The Cluster Sharding Viewer
 
 The viewer can be opened on any currently running cluster node. First, start a cluster.
 
