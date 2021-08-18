@@ -15,7 +15,7 @@ The project series is composed of the following GitHub repos:
 * [akka-typed-java-cluster-aware](https://github.com/mckeeh3/akka-typed-java-cluster-aware)
 * [akka-typed-java-cluster-singleton](https://github.com/mckeeh3/akka-typed-java-cluster-singleton)
 * [akka-typed-java-cluster-sharding](https://github.com/mckeeh3/akka-typed-java-cluster-sharding)  (this project)
-* [woe-sim](https://github.com/mckeeh3/woe-sim) an example o 
+* [woe-sim](https://github.com/mckeeh3/woe-sim) an example o
 [Akka Persistence](https://doc.akka.io/docs/akka/current/typed/index-persistence.html)
 * [woe-twin](https://github.com/mckeeh3/woe-twin) an example of
 [Akka Persistence](https://doc.akka.io/docs/akka/current/typed/index-persistence.html)
@@ -48,7 +48,7 @@ The process of forwarding these messages to the right entities, which could be d
 section of the cluster sharding documentation.
 
 ![Visualization of cluster sharding](docs/images/Akka-Cluster-Sharding-Viewer-01.png)
-->Figure 1, Visualization of cluster sharding<-
+<p align="center">Figure 1, Visualization of cluster sharding</p>
 
 The visualization in Figure 1 shows an example of cluster sharding. The blue leaf circles represent the entity actors. Each entity actor represents the state of an entity. The green circles that connect to the entity circles represent the running shard actors. In the example system there 18 shards configured. The shards connect to the orange shard region actors. These orange circles also represent other actors, such as the entity command and query actors. Also, the orange circles represent the root of the actor system on each cluster node. The grid on the top left represents the state of each of the nine nodes in the cluster. Green tiles in the grid indicate running cluster nodes. Nodes that are down or have no running entity actors are gray.
 
@@ -183,8 +183,10 @@ The main script `./akka` is provided to run a cluster of nodes or start and stop
 Run the akka script with no parameters to see the available options.
 
 ~~~bash
-$ ./akka
+./akka
+~~~
 
+~~~text
 This CLI is used to start, stop and view the dashboard nodes in an Akka cluster.
 
 These commands manage the Akka cluster as defined in this project. A cluster
@@ -227,7 +229,10 @@ Both `stdin` and `stderr` output is sent to a log files in the `/tmp` directory 
 Start a cluster of nine nodes running on ports 2551 to 2559.
 
 ~~~bash
-$ ./akka cluster start
+./akka cluster start
+~~~
+
+~~~text
 Starting 9 cluster nodes
 Start node 1 on port 2551, management port 8551, HTTP port 9551
 Start node 2 on port 2552, management port 8552, HTTP port 9552
@@ -243,7 +248,10 @@ Start node 9 on port 2559, management port 8559, HTTP port 9559
 Stop all currently running cluster nodes.
 
 ~~~bash
-$ ./akka cluster stop
+./akka cluster stop
+~~~
+
+~~~text
 Stop node 1 on port 2551
 Stop node 2 on port 2552
 Stop node 3 on port 2553
@@ -258,14 +266,20 @@ Stop node 9 on port 2559
 Stop node 3 on port 2553.
 
 ~~~bash
-$ ./akka node stop 3
+./akka node stop 3
+~~~
+
+~~~text
 Stop node 3 on port 2553
 ~~~
 
 Stop nodes 5 and 7 on ports 2555 and 2557.
 
 ~~~bash
-$ ./akka node stop 5 7
+./akka node stop 5 7
+~~~
+
+~~~text
 Stop node 5 on port 2555
 Stop node 7 on port 2557
 ~~~
@@ -273,7 +287,10 @@ Stop node 7 on port 2557
 Start node 3, 5, and 7 on ports 2553, 2555 and 2557.
 
 ~~~bash
-$ ./akka node start 3 5 7
+./akka node start 3 5 7
+~~~
+
+~~~text
 Start node 3 on port 2553, management port 8553, HTTP port 9553
 Start node 5 on port 2555, management port 8555, HTTP port 9555
 Start node 7 on port 2557, management port 8557, HTTP port 9557
@@ -282,7 +299,10 @@ Start node 7 on port 2557, management port 8557, HTTP port 9557
 Start a cluster of four nodes on ports 2551, 2552, 2553, and 2554.
 
 ~~~bash
-$ ./akka cluster start 4
+./akka cluster start 4
+~~~
+
+~~~text
 Starting 4 cluster nodes
 Start node 1 on port 2551, management port 8551, HTTP port 9551
 Start node 2 on port 2552, management port 8552, HTTP port 9552
@@ -293,7 +313,7 @@ Start node 4 on port 2554, management port 8554, HTTP port 9554
 Again, stop all currently running cluster nodes.
 
 ~~~bash
-$ ./akka cluster stop
+./akka cluster stop
 ~~~
 
 The `./akka cluster status` command displays the status of a currently running cluster in JSON format using the
@@ -310,7 +330,10 @@ Please see [The Cluster Dashboard](https://github.com/mckeeh3/akka-typed-java-cl
 The viewer can be opened on any currently running cluster node. First, start a cluster.
 
 ~~~bash
-$ ./akka cluster start
+./akka cluster start
+~~~
+
+~~~text
 Starting 9 cluster nodes
 Start node 1 on port 2551, management port 8551, HTTP port 9551
 Start node 2 on port 2552, management port 8552, HTTP port 9552
@@ -326,7 +349,7 @@ Start node 9 on port 2559, management port 8559, HTTP port 9559
 Wait for a few moments for the cluster nodes to start, then use the following command to open the cluster sharding viewer.
 
 ~~~bash
-$ ./akka cluster viewer 2
+./akka cluster viewer 2
 ~~~
 
 Note that the above command opened the viewer using the HTTP server running on node 2.
@@ -358,7 +381,10 @@ In the above image, you can see that entity actor 2558-8 of shard 1 has "moved" 
 Shards and their associated entity actors may be rebalanced When new nodes are added to the cluster. This rebalancing is done to more evenly distribute the workload across the cluster.
 
 ~~~bash
-$ ./akka node start 1 3
+./akka node start 1 3
+~~~
+
+~~~text
 Start node 1 on port 2551, management port 8551, HTTP port 9551
 Start node 3 on port 2553, management port 8553, HTTP port 9553
 ~~~
