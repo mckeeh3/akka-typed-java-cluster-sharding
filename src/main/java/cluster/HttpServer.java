@@ -45,7 +45,6 @@ import akka.http.javadsl.model.ws.TextMessage;
 import akka.http.javadsl.server.Route;
 import akka.japi.JavaPartialFunction;
 import akka.stream.javadsl.Flow;
-import akka.util.Collections;
 import cluster.HttpServer.ServerActivitySummary.ServerActivity;
 
 class HttpServer {
