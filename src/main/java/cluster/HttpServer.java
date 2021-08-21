@@ -18,6 +18,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Queue;
+import java.util.Set;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
@@ -44,6 +45,7 @@ import akka.http.javadsl.model.ws.TextMessage;
 import akka.http.javadsl.server.Route;
 import akka.japi.JavaPartialFunction;
 import akka.stream.javadsl.Flow;
+import akka.util.Collections;
 import cluster.HttpServer.ServerActivitySummary.ServerActivity;
 
 class HttpServer {
@@ -121,6 +123,8 @@ class HttpServer {
     if (messageText.startsWith("akka://")) {
       handleStopNode(messageText);
     }
+    removeOfflineMembers(actorSystem, tree);
+
     return responseAsJson();
   }
 
@@ -143,7 +147,6 @@ class HttpServer {
   private static Nodes loadNodes(ActorSystem<?> actorSystem, ClusterAwareStatistics clusterAwareStatistics, SingletonAwareStatistics singletonAwareStatistics) {
     final var cluster = Cluster.get(actorSystem);
     final var clusterState = cluster.state();
-
     final var unreachable = clusterState.getUnreachable();
 
     final var old = StreamSupport.stream(clusterState.getMembers().spliterator(), false)
@@ -157,7 +160,7 @@ class HttpServer {
 
     final Nodes nodes = new Nodes(
         memberPort(cluster.selfMember()),
-        cluster.selfMember().address().equals(clusterState.getLeader()), 
+        cluster.selfMember().address().equals(clusterState.getLeader()),
         oldest.equals(cluster.selfMember()),
         clusterAwareStatistics, singletonAwareStatistics);
 
@@ -205,6 +208,38 @@ class HttpServer {
         }).collect(Collectors.toList());
   }
 
+  private static void removeOfflineMembers(ActorSystem<?> actorSystem, Tree tree) {
+    var liveMembers = liveMembers(actorSystem);
+    var treeMembers = tree.children.stream().map(c -> c.name).collect(Collectors.toSet());
+
+    actorSystem.log().info("==========");
+    actorSystem.log().info("Live members: ({}) {}", liveMembers.size(), liveMembers);
+    actorSystem.log().info("Tree members before: ({}) {}", treeMembers.size(), treeMembers);
+
+    tree.children.stream()
+      .filter((c -> !liveMembers.contains(c.name)))
+      .collect(Collectors.toList())
+      .forEach(c -> {
+        actorSystem.log().info("Removing offline member: {}", c.name);
+        tree.removeMember(c.name);
+      });
+
+    treeMembers = tree.children.stream().map(c -> c.name).collect(Collectors.toSet());
+    actorSystem.log().info("Tree members after: ({}) {}", treeMembers.size(), treeMembers);
+    actorSystem.log().info("==========");
+  }
+
+  private static Set<String> liveMembers(ActorSystem<?> actorSystem) {
+    final var cluster = Cluster.get(actorSystem);
+    final var clusterState = cluster.state();
+    final var unreachable = clusterState.getUnreachable();
+
+    return StreamSupport.stream(clusterState.getMembers().spliterator(), false)
+      .filter(member -> !(unreachable.contains(member)))
+      .map(member -> member.address().toString())
+      .collect(Collectors.toSet());
+  }
+
   public interface Statistics extends CborSerializable {}
 
   void load(ClusterAwareStatistics clusterAwareStatistics) {
@@ -248,19 +283,26 @@ class HttpServer {
   }
 
   void load(EntityAction entityAction) {
-    switch (entityAction.action) {
-      case "start":
-        tree.add(entityAction.member, entityAction.shardId, entityAction.entityId);
-        activitySummary.load(entityAction);
-        break;
-      case "ping":
-        activitySummary.load(entityAction);
-        break;
-      case "stop":
-        tree.remove(entityAction.member, entityAction.shardId, entityAction.entityId);
-        break;
-      default:
-        break;
+    try {
+      switch (entityAction.action) {
+        case "start":
+          tree.add(entityAction.member, entityAction.shardId, entityAction.entityId);
+          activitySummary.load(entityAction);
+          break;
+        case "ping":
+          tree.ping(entityAction.member, entityAction.shardId, entityAction.entityId);
+          activitySummary.load(entityAction);
+          break;
+        case "stop":
+          tree.remove(entityAction.member, entityAction.shardId, entityAction.entityId);
+          break;
+        default:
+          break;
+      }
+    } catch (RuntimeException e) {
+      log().error("Failed to load entity action: {}", e);
+      log().error("Failed to load entity action: {}", entityAction);
+      log().warn("Failed to load entity action: tree children ({}) {}", tree.children.size(), tree.toJson());
     }
   }
 
@@ -398,7 +440,7 @@ class HttpServer {
       return Objects.hash(port);
     }
   }
-  
+
   public static class Tree implements Serializable {
     private static final long serialVersionUID = 1L;
     public final String name;
@@ -421,6 +463,15 @@ class HttpServer {
     }
 
     void add(String memberId, String shardId, String entityId) {
+      if (memberId == null) {
+        throw new IllegalArgumentException("memberId must not be null");
+      }
+      if (shardId == null) {
+        throw new IllegalArgumentException("shardId must not be null");
+      }
+      if (entityId == null) {
+        throw new IllegalArgumentException("entityId must not be null");
+      }
       removeEntity(entityId);
       var member = find(memberId, "member");
       if (member == null) {
@@ -436,6 +487,13 @@ class HttpServer {
       if (entity == null) {
         entity = Tree.create(entityId, "entity");
         shard.children.add(entity);
+      }
+    }
+
+    void ping(String memberId, String shardId, String entityId) {
+      final var entity = find(entityId, "entity");
+      if (entity == null) {
+        add(memberId, shardId, entityId);
       }
     }
 
@@ -458,16 +516,48 @@ class HttpServer {
     }
 
     void removeEntity(String entityId) {
+      var memberId = "";
+      var shardId = "";
       for (var member : children) {
         for (var shard : member.children) {
           for (var entity : shard.children) {
             if (entity.name.equals(entityId)) {
-              shard.children.remove(entity);
+              memberId = member.name;
+              shardId = shard.name;
               break;
             }
           }
         }
       }
+      if (!memberId.isEmpty()) {
+        remove(memberId, shardId, entityId);
+      }
+    }
+
+    private static class RemoveEntity {
+      final String memberId;
+      final String shardId;
+      final String entityId;
+
+      RemoveEntity(String memberId, String shardId, String entityId) {
+        this.memberId = memberId;
+        this.shardId = shardId;
+        this.entityId = entityId;
+      }
+    }
+
+    void removeMember(String memberId) {
+      final var entities = new ArrayList<RemoveEntity>();
+      for (var member : children) {
+        if (member.name.equals(memberId)) {
+          for (var shard : member.children) {
+            for (var entity : shard.children) {
+              entities.add(new RemoveEntity(member.name, shard.name, entity.name));
+            }
+          }
+        }
+      }
+      entities.forEach(e -> remove(e.memberId, e.shardId, e.entityId));
     }
 
     void incrementEvents(String memberId, String shardId, String entityId) {

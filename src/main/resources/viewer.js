@@ -374,18 +374,18 @@ function nodeId(d) {
 }
 
 function entityColor(d) {
-  return d.data.name == traceEntityId ? '#FF0000' : '#42aaff';
+  return isTraceEntity(d) ? '#FF0000' : '#42aaff';
 }
 
 function shardColor(d) {
-  return d.data.name == traceShardId ? '#FF0000' : '#00C000';
+  return isTraceShard(d) ? '#FF0000' : '#00C000';
 }
 
 function circleColor(d) {
   if (d.data.type.includes('entity')) {
-    return d.data.name == traceEntityId ? '#AA0000' : '#046E97';
+    return isTraceEntity(d) ? '#AA0000' : '#046E97';
   } else if (d.data.type.includes('shard')) {
-    return d.data.name == traceShardId ? '#AA0000' : '#00C000';
+    return isTraceShard(d) ? '#AA0000' : '#00C000';
   } else if (d.data.type.includes('singleton')) {
     return '#8F42EB';
   } else if (d.data.type.includes('httpServer')) {
@@ -470,6 +470,13 @@ let traceEntityIdNew = '';
 let traceEntityId = '';
 let traceShardId = '';
 
+function isTraceEntity(d) {
+  return d.data.name == traceEntityId || (!traceEntityId && d.parent.data.name == traceShardId);
+}
+
+function isTraceShard(d) {
+  return d.data.name == traceShardId;
+}
 d3.select('body').on('keydown', function () {
   if ((d3.event.key >= '0' && d3.event.key <= '9') || d3.event.key == '-') {
     traceEntityIdNew += d3.event.key;

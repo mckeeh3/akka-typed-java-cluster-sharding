@@ -61,7 +61,7 @@ class HttpServerActor {
 
   private Behavior<HttpServer.Statistics> onBroadcastEntityAction(BroadcastEntityAction broadcastEntityAction) {
     serviceInstances.stream()
-        .forEach(httpServeractorRef -> httpServeractorRef.tell(broadcastEntityAction.entityAction));
+        .forEach(httpServerActorRef -> httpServerActorRef.tell(broadcastEntityAction.entityAction));
     return Behaviors.same();
   }
 

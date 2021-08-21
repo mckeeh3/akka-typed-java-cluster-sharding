@@ -28,8 +28,8 @@ downNode() {
   httpStatus=$(curl --write-out %{http_code} --max-time 5 --silent --output /dev/null http://localhost:"$mgmtPort"/cluster/members)
 
   if [[ $httpStatus == 200 ]] ; then
-    echo "Down node $node on port $nodePort via Akka management port $mgmtPort"
-    curl --silent -X PUT -F "operation=Down" http://localhost:"$mgmtPort"/cluster/members/cluster@"$localhostName":"$nodePort" --output /dev/null
+    echo "Down node $node on $localhostName:$nodePort via Akka management $localhostName:$mgmtPort"
+    curl --silent -X PUT -F "operation=down" http://localhost:"$mgmtPort"/cluster/members/cluster@"$localhostName":"$nodePort" --output /dev/null
   else
     echo "Management port $mgmtPort, HTTP response $httpStatus"
   fi
