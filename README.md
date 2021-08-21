@@ -368,9 +368,9 @@ You can stop selected cluster nodes from the viewer's web page by clicking one o
 ![Cluster singleton moves to new oldest node](docs/images/Akka-Cluster-Sharding-Viewer-02.png)
 <p align="center">Figure 3, Cluster singleton moves to new oldest node</p>
 
-It is also possible to highlight and track the selected entity actor. When you click one of the entity actor circles, its color changes to red. Note that entity actor 2558-8 in the above image is red. Also, note that the parent shard actor's color is red.
+It is also possible to highlight and track the selected entity actors. When you click one of the entity actor circles, its color changes to red. Note that entity actor 2558-8 in the above image is red. Also, note that the parent shard actor's color is red.
 
-Highlighting entity and shard actors allows you to watch how entity and shard actors move between nodes as the cluster expands and contracts. Here, node 6 is stopped by clicking the node 6 circle or node 6 in the top-left grid.
+Highlighting entity and shard actors allows you to watch how entity and shard actors move between nodes as the cluster expands and contracts. Here, node 3 is stopped by clicking node 3 in the top-left grid.
 
 ![Shard and entity actors restarted on new node](docs/images/Akka-Cluster-Sharding-Viewer-03.png)
 <p align="center">Figure 4, Shard and entity actors restarted on new node</p>
@@ -393,7 +393,7 @@ Start node 3 on port 2553, management port 8553, HTTP port 9553
 
 In the above image, cluster nodes 1 and 3 have been restarted. Note that nodes 1 and 3 changed from a gray to green background color in the top-left grid. Once these new nodes have joined the cluster, Akka cluster sharding rebalanced some of the shards to nodes 1 and 3. In this example, shard 1 with the red highlighted entity actor 2558-8 was rebalanced to node 1.
 
-In the sample scenario shown in the above images, we tracked entity actor `2558-8`. This entity actor instance started on node 6. When node 6 was stopped, the actor was restarted on node 4. Finally, when nodes 1 and 6 were restarted it triggered a shard rebalance that resulted in entity actor `2558-8`being restarted on node 3.
+In the sample scenario shown in the above images, we tracked entity actor `2558-8`. This entity actor instance started on node 3. When node 3 was stopped, the actor was restarted on node 3. Finally, when nodes 1 and 3 were restarted it triggered a shard rebalance that resulted in entity actor `2558-8`being restarted on node 3.
 
 The key point is that all of the recovery and rebalancing was handled by cluster sharding. This dynamic actor allocation is an example of [location transparency](https://doc.akka.io/docs/akka/current/general/remoting.html#location-transparency).
 
@@ -408,3 +408,15 @@ In Figure 6 shown above, each of the large circles has been clicked. The now hid
 <p align="center">Figure 6, Message lines turned on node 8</p>
 
 In Figure 6, node 8 was clicked to toggle the message lines on from that node. As you can see in this case, the lines from node 8 are linked to entity circles running on other nodes in the cluster. This is a visualization of [Location Transparency](https://doc.akka.io/docs/akka/current/general/remoting.html#location-transparency).
+
+It is also possible to track a shard and its associated entity actors. Click one of the green shard circles to toggle the tracking.
+
+![Message lines turned on node 8](docs/images/Akka-Cluster-Sharding-Viewer-07.png)
+<p align="center">Figure 7, Message lines turned on node 8</p>
+
+In Figure 7, shard 1 on node 2 is clicked. Note that the shard and its entities are shown in red. Next, node 2 is stopped by clicking it in the top left node grid.
+
+![Highlighted shard redistributed](docs/images/Akka-Cluster-Sharding-Viewer-08.png)
+<p align="center">Figure 8, Highlighted shard redistributed</p>
+
+When node 2 is stopped, shard 1 is rebalanced to node 7, as shown above in Figure 8.
