@@ -209,11 +209,6 @@ class HttpServer {
 
   private static void removeOfflineMembers(ActorSystem<?> actorSystem, Tree tree) {
     var liveMembers = liveMembers(actorSystem);
-    var treeMembers = tree.children.stream().map(c -> c.name).collect(Collectors.toSet());
-
-    actorSystem.log().info("==========");
-    actorSystem.log().info("Live members: ({}) {}", liveMembers.size(), liveMembers);
-    actorSystem.log().info("Tree members before: ({}) {}", treeMembers.size(), treeMembers);
 
     tree.children.stream()
       .filter((c -> !liveMembers.contains(c.name)))
@@ -222,10 +217,6 @@ class HttpServer {
         actorSystem.log().info("Removing offline member: {}", c.name);
         tree.removeMember(c.name);
       });
-
-    treeMembers = tree.children.stream().map(c -> c.name).collect(Collectors.toSet());
-    actorSystem.log().info("Tree members after: ({}) {}", treeMembers.size(), treeMembers);
-    actorSystem.log().info("==========");
   }
 
   private static Set<String> liveMembers(ActorSystem<?> actorSystem) {
