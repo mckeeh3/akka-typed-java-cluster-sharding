@@ -1,5 +1,10 @@
 package cluster;
 
+import java.util.Arrays;
+
+import com.typesafe.config.Config;
+import com.typesafe.config.ConfigFactory;
+
 import akka.actor.typed.ActorRef;
 import akka.actor.typed.ActorSystem;
 import akka.actor.typed.Behavior;
@@ -9,11 +14,6 @@ import akka.actor.typed.javadsl.Behaviors;
 import akka.cluster.sharding.typed.javadsl.ClusterSharding;
 import akka.cluster.sharding.typed.javadsl.Entity;
 import akka.management.javadsl.AkkaManagement;
-
-import com.typesafe.config.Config;
-import com.typesafe.config.ConfigFactory;
-
-import java.util.Arrays;
 
 class Main {
   static Behavior<Void> create() {
