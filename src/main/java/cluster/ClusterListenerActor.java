@@ -37,8 +37,7 @@ class ClusterListenerActor extends AbstractBehavior<ClusterEvent.ClusterDomainEv
   }
 
   private void subscribeToClusterEvents() {
-    Cluster.get(getContext().getSystem())
-        .subscriptions()
+    cluster.subscriptions()
         .tell(Subscribe.create(getContext().getSelf(), ClusterEvent.ClusterDomainEvent.class));
   }
 
