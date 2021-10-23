@@ -81,7 +81,7 @@ class HttpServer {
         path("", () -> getFromResource("dashboard.html", ContentTypes.TEXT_HTML_UTF8)),
         path("dashboard", () -> getFromResource("dashboard.html", ContentTypes.TEXT_HTML_UTF8)),
         path("dashboard.html", () -> getFromResource("dashboard.html", ContentTypes.TEXT_HTML_UTF8)),
-        path("dashboard.js", () -> getFromResource("dashboard.js", ContentTypes.APPLICATION_JSON)),
+        path("dashboard-main-sharding.js", () -> getFromResource("dashboard-main-sharding.js", ContentTypes.APPLICATION_JSON)),
         path("dashboard-cluster-aware.js", () -> getFromResource("dashboard-cluster-aware.js", ContentTypes.APPLICATION_JSON)),
         path("dashboard-singleton-aware.js", () -> getFromResource("dashboard-singleton-aware.js", ContentTypes.APPLICATION_JSON)),
         path("p5.js", () -> getFromResource("p5.js", ContentTypes.APPLICATION_JSON)),
@@ -91,8 +91,7 @@ class HttpServer {
         path("viewer.js", () -> getFromResource("viewer.js", ContentTypes.APPLICATION_JSON)),
         path("d3.v5.js", () -> getFromResource("d3.v5.js", MediaTypes.APPLICATION_JAVASCRIPT.toContentTypeWithMissingCharset())),
         path("viewer-entities", () -> handleWebSocketMessages(handleClientMessages())),
-        path("favicon.ico", () -> getFromResource("favicon.ico", MediaTypes.IMAGE_X_ICON.toContentType()))
-    );
+        path("favicon.ico", () -> getFromResource("favicon.ico", MediaTypes.IMAGE_X_ICON.toContentType())));
   }
 
   private Route clusterState() {
@@ -202,21 +201,21 @@ class HttpServer {
 
   private static List<Integer> seedNodePorts(ActorSystem<?> actorSystem) {
     return actorSystem.settings().config().getList("akka.cluster.seed-nodes").stream().map(s -> s.unwrapped().toString()).map(s -> {
-          final var split = s.split(":");
-          return split.length == 0 ? 0 : Integer.parseInt(split[split.length - 1]);
-        }).collect(Collectors.toList());
+      final var split = s.split(":");
+      return split.length == 0 ? 0 : Integer.parseInt(split[split.length - 1]);
+    }).collect(Collectors.toList());
   }
 
   private static void removeOfflineMembers(ActorSystem<?> actorSystem, Tree tree) {
     var liveMembers = liveMembers(actorSystem);
 
     tree.children.stream()
-      .filter((c -> !liveMembers.contains(c.name)))
-      .collect(Collectors.toList())
-      .forEach(c -> {
-        actorSystem.log().info("Removing offline member: {}", c.name);
-        tree.removeMember(c.name);
-      });
+        .filter((c -> !liveMembers.contains(c.name)))
+        .collect(Collectors.toList())
+        .forEach(c -> {
+          actorSystem.log().info("Removing offline member: {}", c.name);
+          tree.removeMember(c.name);
+        });
   }
 
   private static Set<String> liveMembers(ActorSystem<?> actorSystem) {
@@ -225,12 +224,13 @@ class HttpServer {
     final var unreachable = clusterState.getUnreachable();
 
     return StreamSupport.stream(clusterState.getMembers().spliterator(), false)
-      .filter(member -> !(unreachable.contains(member)))
-      .map(member -> member.address().toString())
-      .collect(Collectors.toSet());
+        .filter(member -> !(unreachable.contains(member)))
+        .map(member -> member.address().toString())
+        .collect(Collectors.toSet());
   }
 
-  public interface Statistics extends CborSerializable {}
+  public interface Statistics extends CborSerializable {
+  }
 
   void load(ClusterAwareStatistics clusterAwareStatistics) {
     this.clusterAwareStatistics = clusterAwareStatistics;
@@ -275,19 +275,19 @@ class HttpServer {
   void load(EntityAction entityAction) {
     try {
       switch (entityAction.action) {
-        case "start":
-          tree.add(entityAction.member, entityAction.shardId, entityAction.entityId);
-          activitySummary.load(entityAction);
-          break;
-        case "ping":
-          tree.ping(entityAction.member, entityAction.shardId, entityAction.entityId);
-          activitySummary.load(entityAction);
-          break;
-        case "stop":
-          tree.remove(entityAction.member, entityAction.shardId, entityAction.entityId);
-          break;
-        default:
-          break;
+      case "start":
+        tree.add(entityAction.member, entityAction.shardId, entityAction.entityId);
+        activitySummary.load(entityAction);
+        break;
+      case "ping":
+        tree.ping(entityAction.member, entityAction.shardId, entityAction.entityId);
+        activitySummary.load(entityAction);
+        break;
+      case "stop":
+        tree.remove(entityAction.member, entityAction.shardId, entityAction.entityId);
+        break;
+      default:
+        break;
       }
     } catch (RuntimeException e) {
       log().error("Failed to load entity action: {}", e);
@@ -419,8 +419,10 @@ class HttpServer {
 
     @Override
     public boolean equals(Object o) {
-      if (this == o) return true;
-      if (o == null || getClass() != o.getClass()) return false;
+      if (this == o)
+        return true;
+      if (o == null || getClass() != o.getClass())
+        return false;
       Node node = (Node) o;
       return Objects.equals(port, node.port);
     }
@@ -587,16 +589,15 @@ class HttpServer {
 
     void setMemberType(String memberId, String type) {
       children.forEach(
-        child -> {
-          if (child.name.equals(memberId)) {
-            if (!child.type.contains(type)) {
-              child.type = child.type + " " + type;
+          child -> {
+            if (child.name.equals(memberId)) {
+              if (!child.type.contains(type)) {
+                child.type = child.type + " " + type;
+              }
+            } else if (child.type.contains(type)) {
+              unsetMemberType(child.name, type);
             }
-          } else if (child.type.contains(type)) {
-            unsetMemberType(child.name, type);
-          }
-        }
-      );
+          });
     }
 
     void unsetMemberType(String memberId, String type) {
@@ -697,13 +698,18 @@ class HttpServer {
 
       @Override
       public boolean equals(Object obj) {
-        if (this == obj) return true;
-        if (obj == null) return false;
-        if (getClass() != obj.getClass()) return false;
+        if (this == obj)
+          return true;
+        if (obj == null)
+          return false;
+        if (getClass() != obj.getClass())
+          return false;
         ServerActivity other = (ServerActivity) obj;
         if (server == null) {
-          if (other.server != null) return false;
-        } else if (!server.equals(other.server)) return false;
+          if (other.server != null)
+            return false;
+        } else if (!server.equals(other.server))
+          return false;
         return true;
       }
 
